@@ -138,15 +138,15 @@ Message: """${text.slice(-400)}"""`;
 function label(c) {
   switch (c.kind) {
     case 'zec_send':
-      return { title: `Send ${c.amount} ZEC${c.name ? ' to ' + cap(c.name) : ''}`, subtitle: c.address ? 'Shielded' : 'No address saved' };
+      return { title: `Send ${c.amount} ZEC${c.name ? ' to ' + cap(c.name) : ''}`, subtitle: c.address ? 'Shielded · Zcash' : 'No address saved' };
     case 'zec_request':
       return { title: `Request ${c.amount} ZEC`, subtitle: 'Shielded link' };
     case 'swap':
       return { title: `Swap ${c.amount} ${c.from} → ${c.to}`, subtitle: 'NEAR Intents' };
     case 'topup':
-      return { title: `Recharge ${(c.name || '').toLowerCase() === 'me' ? 'my' : cap(c.name) + "'s"} ${cap(c.operator || 'phone')} ₹${c.amount}`, subtitle: c.phone || 'No number saved' };
+      return { title: `Recharge ${(c.name || '').toLowerCase() === 'me' ? 'my' : cap(c.name) + "'s"} ${cap(c.operator || 'phone')} ₹${c.amount}`, subtitle: c.phone ? c.phone.replace(/^(\+\d{2})(\d{2})\d+(\d{3})$/, '$1 $2•••••$3') : 'No number saved' };
     case 'gift':
-      return { title: `${c.name ? 'Send ' + cap(c.name) + ' ' : ''}₹${c.amount} ${cap(c.brand)} card`, subtitle: c.occasion ? `For the ${c.occasion}` : 'Gift card' };
+      return { title: `${c.name ? 'Send ' + cap(c.name) + ' ' : ''}₹${c.amount} ${cap(c.brand)} card`, subtitle: c.occasion ? `Gift for the ${c.occasion}` : 'Gift card · Bitrefill' };
     case 'esim':
       return { title: `eSIM for ${cap(c.country)}`, subtitle: 'Data on landing' };
     default:

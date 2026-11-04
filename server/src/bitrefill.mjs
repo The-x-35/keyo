@@ -12,7 +12,7 @@ async function call(path, init = {}) {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = body?.error?.message || body?.message || JSON.stringify(body).slice(0, 200);
-    throw new Error(`Bitrefill ${res.status}: ${msg}`);
+    throw new Error(`Bitrefill: ${msg}`);
   }
   return body.data ?? body;
 }

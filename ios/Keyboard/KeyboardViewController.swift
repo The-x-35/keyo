@@ -99,7 +99,8 @@ final class KeyboardModel: ObservableObject {
     /// Asks the server for chips once typing pauses.
     func contextChanged() {
         let ctx = proxy?.documentContextBeforeInput ?? ""
-        if ctx.isEmpty { shift = true }
+        let trimmed = ctx.replacingOccurrences(of: " ", with: "")
+        shift = ctx.isEmpty || ctx.hasSuffix("\n") || (ctx.hasSuffix(" ") && [".", "!", "?"].contains(trimmed.last.map(String.init) ?? ""))
         guard ctx != lastContext else { return }
         lastContext = ctx
         suggestTask?.cancel()
@@ -132,6 +133,7 @@ final class KeyboardModel: ObservableObject {
                 let out = try await API.act(chip)
                 handle(out, chip)
             } catch {
+                chips = []
                 status = error.localizedDescription
             }
         }
@@ -159,6 +161,7 @@ final class KeyboardModel: ObservableObject {
             chips = []
             status = state == "done" ? "Done ✓" : nil
         } else if let msg = out["message"] as? String {
+            chips = []
             status = msg
         }
         if let open = out["open"] as? String, let url = URL(string: open) {
@@ -174,6 +177,8 @@ final class KeyboardModel: ObservableObject {
         proxy.insertText(text)
         lastContext = proxy.documentContextBeforeInput ?? ""
     }
+
+    var needsGlobe: Bool { controller?.needsInputModeSwitchKey ?? true }
 
     func nextKeyboard() {
         controller?.advanceToNextInputMode()

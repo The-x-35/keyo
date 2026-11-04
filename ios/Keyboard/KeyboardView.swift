@@ -34,7 +34,9 @@ struct KeyboardView: View {
                 }
                 HStack(spacing: 6) {
                     special(model.numbers ? "ABC" : "123", icon: nil, width: 46) { model.numbers.toggle() }
-                    special(nil, icon: "globe", width: 40) { model.nextKeyboard() }
+                    if model.needsGlobe {
+                        special(nil, icon: "globe", width: 40) { model.nextKeyboard() }
+                    }
                     Key(label: "space", fill: keyFill, ink: ink, fontSize: 16) { model.space() }
                     special("return", icon: nil, width: 92) { model.newline() }
                 }
@@ -169,7 +171,7 @@ struct ChipView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(chip.title).font(.system(size: 13.5, weight: .semibold)).lineLimit(1)
                 if !chip.subtitle.isEmpty {
-                    Text(chip.subtitle.uppercased()).font(Roman.caps(8.5, .bold)).tracking(1).foregroundStyle(Roman.faded).lineLimit(1)
+                    Text(chip.subtitle).font(.system(size: 10.5, weight: .medium)).foregroundStyle(Roman.faded).lineLimit(1)
                 }
             }
         }
