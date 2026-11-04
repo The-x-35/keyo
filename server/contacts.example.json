@@ -34,13 +34,13 @@
     "demo": true
   },
   {
-    "name": "Priya",
+    "name": "Sakshi",
     "aliases": [
-      "priya"
+      "sakshi"
     ],
     "phone": "+919800000003",
     "operator": "jio",
-    "email": "priya@example.com",
+    "email": "sakshi@example.com",
     "demo": true
   },
   {

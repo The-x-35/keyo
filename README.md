@@ -10,7 +10,7 @@ Built at Free Society Hack, Mumbai, 4 Nov 2026, for **Agentic Commerce (Bitrefil
 |---|---|---|---|
 | Mom | "My phone balance is over 😟" | **Autopilot** recharges her phone through Bitrefill and types the confirmation | press send |
 | Mom | "Can you do this every month?" | A **standing order** that runs by itself every month, inside your limits | tap, then none |
-| Priya | "It's my birthday today!! 🎂" | The **shopper** picks 3 cards from Bitrefill's catalog; over the $25 limit needs **Face ID**; Bitrefill emails it to her | tap |
+| Sakshi | "It's my birthday today!! 🎂" | The **shopper** picks 3 cards from Bitrefill's catalog; over the $25 limit needs **Face ID**; Bitrefill emails it to her | tap |
 | Rahul | "Dinner was $90 for the 3 of us. Send me your share" | Sends $30 of **shielded ZEC** from Aegis at the live price, with the explorer link | press send |
 | Alex (client) | "Can we hop on a call this week?" | Free slots from the **calendar**; a tap books it and sends the invite | tap |
 | Alex (client) | "Send me your invoice for the $150, happy to pay in ZEC" | A shielded `zcash:` invoice priced live | press send |

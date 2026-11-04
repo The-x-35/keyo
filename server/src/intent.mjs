@@ -72,7 +72,7 @@ function rules(text) {
     if (!who) who = findContact('me');
     return [{ kind: 'topup', usd: num(m[3] || 2.5), name: who?.name || m[1] || 'me', phone: who?.phone || null, operator: m[2] || who?.operator || 'jio', demo: !!who?.demo }];
   }
-  // "send priya a $25 starbucks card"
+  // "send sakshi a $25 starbucks card"
   if ((m = t.match(new RegExp(`\\b(?:send|gift|buy|get)\\s+(?:(\\w+)\\s+)?(?:an?\\s+)?\\$?(\\d[\\d,.]*)?\\s*(${BRANDS.join('|')})(?:\\s+(?:gift\\s*card|card|credit))?(?:\\s+(?:to|for)\\s+(\\w+))?`)))) {
     const who = findContact(m[4] || m[1]);
     return [{ kind: 'gift', brand: m[3], product_id: BRAND_IDS[m[3]], usd: num(m[2] || 25), name: who?.name || null, email: who?.email || null, demo: !!who?.demo }];
@@ -140,7 +140,7 @@ function replyCommand(incoming, from) {
   if (/\b(usdc|stablecoins?|usdt)\b/.test(t)) return `take ${dollars || 100} usdc as zec from ${who}`;
   if (/\binvoice\b/.test(t) && dollars) return `invoice $${dollars} in zec`;
   if (/\b(call|meet|chat|catch up|hop on|sync)\b/.test(t) && /\b(this week|tomorrow|today|next week|monday|tuesday|wednesday|thursday|friday|free|when|time)\b/.test(t)) return 'meet:';
-  if (/\bmy (birthday|bday)\b|\bit'?s my (birthday|bday)\b/.test(t)) return `shop:birthday gift for ${from}, between $15 and $50`;
+  if (/\bmy (birthday|bday)\b|\bit'?s my (birthday|bday)\b/.test(t)) return `shop:birthday gift for ${from}: two cards around $20 and one special card around $50`;
   if (/\b(landing in|landed in|flying to|going to|trip to)\s+([a-z]+)/.test(t)) return `esim for ${t.match(/\b(?:landing in|landed in|flying to|going to|trip to)\s+([a-z]+(?:\s[a-z]+)?)/)[1]}`;
   if (/\b(zec|zcash)\b.*\b(price|worth|rate)\b|how much is (?:a |one )?(zec|zcash)/.test(t)) return 'zec price';
   return null;

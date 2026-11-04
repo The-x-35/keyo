@@ -51,9 +51,9 @@ struct ChatThread: Identifiable {
             Scene(opener: say("Mom", "Can you do this every month so I don't have to ask? 🙈"),
                   thanks: say("Mom", "No more asking 😄")),
         ]),
-        ChatThread(id: "priya", name: "Priya", avatar: "P", tint: Color(hex: 0xD45D8A), members: [], scenes: [
-            Scene(opener: say("Priya", "It's my birthday today!! 🎂🥳"),
-                  thanks: say("Priya", "Aww just got the email 🥹 thank you!!")),
+        ChatThread(id: "sakshi", name: "Sakshi", avatar: "P", tint: Color(hex: 0xD45D8A), members: [], scenes: [
+            Scene(opener: say("Sakshi", "It's my birthday today!! 🎂🥳"),
+                  thanks: say("Sakshi", "Aww just got the email 🥹 thank you!!")),
         ]),
         ChatThread(id: "rahul", name: "Rahul", avatar: "R", tint: Color(hex: 0x3A7BD5), members: [], scenes: [
             Scene(opener: say("Rahul", "Dinner was $90 for the 3 of us. Send me your share when you can 🙏"),
@@ -85,6 +85,8 @@ final class ChatStore: ObservableObject {
     @Published var scene: [String: Int] = [:]
     @Published var unread: [String: Int] = [:]
     @Published var typing: [String: String] = [:]
+    /// The chat on screen; only its messages reach the keyboard.
+    var open: String?
 
     init() {
         // Each chat opens with its first message already waiting.
@@ -99,6 +101,7 @@ final class ChatStore: ObservableObject {
 
     /// Shares the chat's latest incoming message with the keyboard, like a reply suggestion.
     func share(_ t: ChatThread) {
+        open = t.id
         if let m = messages[t.id]?.last(where: { !$0.mine }), let from = m.from { Keyo.incoming = (m.text, from) }
         unread[t.id] = 0
     }
@@ -129,7 +132,7 @@ final class ChatStore: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
                 self.typing[t.id] = nil
                 self.messages[t.id, default: []].append(Message(from: line.from, text: line.text))
-                Keyo.incoming = (line.text, line.from)
+                if self.open == t.id { Keyo.incoming = (line.text, line.from) } else { self.unread[t.id, default: 0] += 1 }
             }
         }
     }
@@ -234,6 +237,7 @@ struct ThreadView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .onAppear { store.share(thread) }
+        .onDisappear { if store.open == thread.id { store.open = nil } }
         .onChange(of: messages) { _, _ in store.unread[thread.id] = 0 }
         .onLongPressGesture(minimumDuration: 1.2) { store.restart(thread) }
     }

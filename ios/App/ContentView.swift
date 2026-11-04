@@ -75,7 +75,7 @@ struct ForumView: View {
 
     private let spells = [
         ("iphone.gen3", "recharge mom's phone"),
-        ("gift", "send priya a $20 starbucks card"),
+        ("gift", "send sakshi a $20 starbucks card"),
         ("shield.lefthalf.filled", "send rahul $30 in zec"),
         ("arrow.down.left", "invoice $150 in zec"),
         ("calendar", "free for a call thursday?"),
