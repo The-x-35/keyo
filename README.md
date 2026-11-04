@@ -10,7 +10,7 @@ Built at Free Society Hack, Mumbai, 4 Nov 2026, for **Agentic Commerce (Bitrefil
 |---|---|---|---|
 | Mom | "My phone balance is over 😟" | **Autopilot** recharges her phone through Bitrefill and types the confirmation | press send |
 | Mom | "Can you do this every month?" | A **standing order** that runs by itself every month, inside your limits | tap, then none |
-| Sakshi | "It's my birthday today!! 🎂" | The **shopper** picks 3 cards from Bitrefill's catalog; over the $25 limit needs **Face ID**; Bitrefill emails it to her | tap |
+| Sakshi | "It's my birthday today!! 🎂" | The **shopper** picks 3 cards from Bitrefill's catalog; over the $3 limit needs **Face ID**; Bitrefill emails it to her | tap |
 | Rahul | "Dinner was $90 for the 3 of us. Send me your share" | Sends $30 of **shielded ZEC** from Aegis at the live price, with the explorer link | press send |
 | Alex (client) | "Can we hop on a call this week?" | Free slots from the **calendar**; a tap books it and sends the invite | tap |
 | Alex (client) | "Send me your invoice for the $150, happy to pay in ZEC" | A shielded `zcash:` invoice priced live | press send |
@@ -24,7 +24,7 @@ Messages no rule knows go to Gemini, which picks the errand. The app's **Chat** 
 Bitrefill's loop is trigger → guarantee → fulfillment → ending. Keyo covers all four without a checkout:
 
 - **Trigger:** the other person's message (proactive chips), your own words, or a schedule (standing orders run on the server every minute/day/week/month).
-- **Guarantee:** $25 per purchase and $50 per day. Above that, Face ID in the app. Autopilot only acts on a single, clear action under the limit. Every run is logged in the Ledger with its invoice ID.
+- **Guarantee:** $3 per purchase and $10 per day. Above that, Face ID in the app. Autopilot only acts on a single, clear action under the limit. Every run is logged in the Ledger with its invoice ID.
 - **Fulfillment:** Bitrefill's eCommerce MCP (`buy-products`, `get-invoice-by-id`, `get-balances`) paying from the account balance, plus REST v2 for the catalog (`/products`, `/products/{id}`, `/check_phone_number`, `/products/esims`).
 - **Ending:** recharges land on the phone; cards, PINs and eSIM install links are typed into the chat or emailed straight to the recipient (`gift` in `buy-products`). No copy and paste.
 
@@ -33,11 +33,11 @@ Bitrefill's loop is trigger → guarantee → fulfillment → ending. Keyo cover
 - **eCommerce MCP** `https://api.bitrefill.com/mcp`: `buy-products` (balance, USD sub-account, gift emails, `refill_input` for top-ups), `get-invoice-by-id` polled until `all_delivered`, `get-balances`.
 - **REST v2**: US catalog for the shopper, product packages, operator lookup by phone number, eSIM catalog.
 - **Built:** the keyboard, intent rules, proactive replies, Autopilot, standing orders, the Gemini shopper constrained to Bitrefill's catalog, guardrails and approvals. **Reused:** Bitrefill's catalog, payment and delivery.
-- **Real purchases:** invoice `2e4d1b5e-3699-4fa7-a04a-30aec1a6975a` ($0.56 Flipkart card, delivered in 1.6 s) and `0b0b1dbf-9d76-43d0-9772-234a59810266` ($0.56 Flipkart card, bought by Keyo's own flow).
+- **Real purchases:** `95f033ab-6e7d-4013-90da-65ace1aa888b` (Airtel ₹10 top-up, $0.11, agent-initiated through Keyo's guarded path), `6320a62e-99e5-4f09-9d0e-392f6c80f28b` ($5 Starbucks card emailed by Bitrefill after Face ID approval), invoice `2e4d1b5e-3699-4fa7-a04a-30aec1a6975a` ($0.56 Flipkart card, delivered in 1.6 s) and `0b0b1dbf-9d76-43d0-9772-234a59810266` ($0.56 Flipkart card, bought by Keyo's own flow).
 
 ## Guardrails
 
-- Most an agent can spend: **$25 a purchase, $50 a day** (`CAP_PER_PURCHASE_USD`, `CAP_PER_DAY_USD`).
+- Most an agent can spend: **$3 a purchase, $10 a day** (`CAP_PER_PURCHASE_USD`, `CAP_PER_DAY_USD`).
 - Above that, the phone owner approves with Face ID in Keyo; nothing is bought until then.
 - Standing orders use the same limits.
 - Contacts without a real number (the test chat's Mom) are never charged: their flows use Bitrefill's real catalog and prices but skip payment.

@@ -17,7 +17,7 @@ export async function catalog(country = 'US') {
       if (!p.in_stock || cats.includes('refill') || cats.includes('bundles') || p.recipient_type === 'phone_number') continue;
       const amounts = (p.packages || []).map((k) => Number(k.amount ?? k.value)).filter(Number.isFinite).sort((a, b) => a - b);
       if (!amounts.length) continue;
-      items.push({ id: p.id, name: p.base_name || p.name, cats, amounts });
+      items.push({ id: p.id, name: p.base_name || p.name, cats, amounts, min: p.range?.min });
     }
     if (page.length < 50) break;
   }
@@ -33,7 +33,7 @@ export async function picks(request, { budget } = {}) {
   if (!key) return [];
   const items = (await catalog()).filter((p) => !SLOW.has(p.id));
   const list = items.map((p) => `${p.id} | ${p.name} | ${p.cats.join('/')} | $${p.amounts.slice(0, 8).join(',')}`).join('\n');
-  const prompt = `You are a gifting assistant inside a phone keyboard. From this catalog of digital gift cards (id | brand | categories | $ amounts available), choose the 3 best for the request, three different kinds of gift. Pick an amount from that brand's list${budget ? `, at most $${budget}` : ''}, and honour any price range in the request. Prefer instant, widely loved brands.
+  const prompt = `You are a gifting assistant inside a phone keyboard. From this catalog of digital gift cards (id | brand | categories | $ amounts available), choose the 3 best for the request, three different kinds of gift. Prefer instant, widely loved brands.
 Reply JSON only: {"picks":[{"id":"...","amount":number,"why":"3-5 words"}]}
 
 Request: """${request.slice(-300)}"""
@@ -62,8 +62,8 @@ ${list}`;
       .slice(0, 3)
       .map((x) => {
         const p = byId.get(x.id);
-        const want = Number(x.amount) || p.amounts[0];
-        const amount = p.amounts.reduce((best, a) => (Math.abs(a - want) < Math.abs(best - want) && (!budget || a <= budget) ? a : best), p.amounts[0]);
+        // The smallest card each brand sells: gifts cost as little as possible.
+        const amount = Math.min(...p.amounts, p.min ?? Infinity);
         return { kind: 'gift', product_id: p.id, brand: p.name, usd: amount, why: x.why };
       })
       .filter(Boolean);

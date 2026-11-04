@@ -537,6 +537,8 @@ extension ISO8601DateFormatter {
 
 struct VaultView: View {
     @State private var autopilot = Keyo.autopilot
+    @State private var live = false
+    @State private var liveLoaded = false
     @State private var test = "—"
     @State private var testAddress: String?
     @State private var server = Keyo.serverURL
@@ -560,6 +562,10 @@ struct VaultView: View {
                     }
                 }
                 .tint(Roman.gold)
+                Toggle(isOn: $live) {
+                    Text("LIVE").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(live ? Roman.porphyry : Roman.gold)
+                }
+                .tint(Roman.porphyry)
             }
             if let aegisAddress { addressCard("Aegis · mainnet", aegisAddress) }
             if let testAddress { addressCard("Aegis · testnet · \(test)", testAddress) }
@@ -578,11 +584,19 @@ struct VaultView: View {
                 }
             }
         }
-        .task { await load() }
+        .task {
+            await load()
+            live = (try? await API.request("GET", "/demo/live"))?["live"] as? Bool ?? false
+            liveLoaded = true
+        }
         .refreshable { await load() }
         .onChange(of: server) { _, v in Keyo.serverURL = v }
         .onChange(of: token) { _, v in Keyo.token = v }
         .onChange(of: autopilot) { _, v in Keyo.autopilot = v }
+        .onChange(of: live) { _, v in
+            guard liveLoaded else { return }
+            Task { _ = try? await API.request("POST", "/demo/live", body: ["live": v]) }
+        }
         .onAppear { autopilot = Keyo.autopilot; Keyo.sandbox = false }
     }
 

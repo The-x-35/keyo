@@ -24,8 +24,8 @@ if (fs.existsSync(envFile)) {
 }
 
 const PORT = Number(process.env.PORT || 8787);
-const CAP_PER_PURCHASE = Number(process.env.CAP_PER_PURCHASE_USD || 25);
-const CAP_PER_DAY = Number(process.env.CAP_PER_DAY_USD || 50);
+const CAP_PER_PURCHASE = Number(process.env.CAP_PER_PURCHASE_USD || 3);
+const CAP_PER_DAY = Number(process.env.CAP_PER_DAY_USD || 10);
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const money = (n) => `$${Number(n).toFixed(2).replace(/\.00$/, '')}`;
@@ -54,6 +54,13 @@ async function resolve(chip) {
     } catch {}
     if (!productId) productId = OPERATOR_PRODUCTS[(chip.operator || 'jio').toLowerCase()];
     const product = await br.product(productId);
+    // The MCP knows every plan's dollar price; take the one closest to what was asked.
+    const plans = await mcp.packages(productId).catch(() => []);
+    if (plans.length) {
+      const k = [...plans].sort((a, b) => Math.abs(a.usd - chip.usd) - Math.abs(b.usd - chip.usd))[0];
+      const named = !/^\d+(\.\d+)?$/.test(k.value);
+      return { product, pkg: { value: k.value, plan: named ? k.value : null }, usd: k.usd, phone_number: chip.phone };
+    }
     return { ...(await priced(product, chip.usd)), phone_number: chip.phone };
   }
   if (chip.kind === 'gift') {
@@ -253,7 +260,10 @@ async function readJson(req) {
 const routes = {
   'GET /health': async () => ({ ok: true }),
   'POST /suggest': async (b) => ({ chips: await suggest(String(b.text || ''), { incoming: b.incoming, from: b.from }) }),
-  'POST /act': async (b) => act(b.chip, b.mode, !!b.sandbox || !!b.chip?.demo),
+  // Rehearsal mode runs every flow with real products and prices but pays for nothing.
+  'POST /act': async (b) => act(b.chip, b.mode, !!b.sandbox || !!b.chip?.demo || !store.live()),
+  'GET /demo/live': async () => ({ live: store.live() }),
+  'POST /demo/live': async (b) => ({ live: store.setLive(!!b.live) }),
   'GET /approval': async (_, q) => store.approval(q.get('id')) || { status: 'missing' },
   'POST /approve': async (b) => {
     const a = store.approval(b.id);

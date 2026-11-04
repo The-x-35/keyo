@@ -68,5 +68,5 @@ export async function send(to, amountZec, memo, network) {
   });
   const txid = [...(await txids(c))].find((t) => !before.has(t)) || [...`${out}\n${err}`.matchAll(/\b[0-9a-f]{64}\b/g)].map((m) => m[0]).filter((t) => !before.has(t)).pop();
   if (!txid) throw new Error(`Aegis send failed: ${`${err || out}`.trim().split('\n').pop().slice(0, 200)}`);
-  return { txid, network: c.net, explorer: c.net === 'test' ? `https://testnet.zcashexplorer.app/transactions/${txid}` : `https://mainnet.zcashexplorer.app/transactions/${txid}` };
+  return { txid, network: c.net, explorer: c.net === 'test' ? `https://zexplorer.app/testnet/tx/${txid}` : `https://mainnet.zcashexplorer.app/transactions/${txid}` };
 }

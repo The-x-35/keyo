@@ -42,6 +42,13 @@ export async function buy({ product_id, package_value, refill_input, gift }) {
   return { invoice_id, access_token: field(text, 'invoice_access_token') };
 }
 
+// Every package with its price in dollars. The MCP lists small top-ups (Airtel ₹10)
+// that the REST catalog leaves out.
+export async function packages(product_id) {
+  const text = await callTool('get-product-details', { product_id });
+  return [...text.matchAll(/^\s*"?([^",\n]+)"?,([A-Z]{3}),"?([\d.]+)"?,USD\s*$/gm)].map((m) => ({ value: m[1], currency: m[2], usd: Number(m[3]) }));
+}
+
 // Paid isn't delivered: poll until the order lands.
 export async function waitDelivered(invoice_id, timeoutMs = 45_000) {
   const start = Date.now();

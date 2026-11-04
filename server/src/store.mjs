@@ -88,3 +88,11 @@ export function resetDemo() {
   state.calendar = [];
   save();
 }
+
+// Live mode spends real money; off (the default) is a rehearsal that charges nothing.
+export const live = () => !!state.live;
+export function setLive(on) {
+  state.live = on;
+  save();
+  return on;
+}

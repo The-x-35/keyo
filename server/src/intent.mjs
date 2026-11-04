@@ -70,7 +70,7 @@ function rules(text) {
   if ((m = t.match(/\b(?:recharge|top\s?up|topup)\s+(?:my\s+)?(?:(\w+?)(?:'s)?\s+)?(?:(jio|airtel|vi|bsnl)\s+)?(?:phone\s*|number\s*)?(?:for\s+|with\s+)?(?:\$(\d[\d.]*))?/))) {
     let who = OPERATORS.includes(m[1]) ? null : findContact(m[1]);
     if (!who) who = findContact('me');
-    return [{ kind: 'topup', usd: num(m[3] || 2.5), name: who?.name || m[1] || 'me', phone: who?.phone || null, operator: m[2] || who?.operator || 'jio', demo: !!who?.demo }];
+    return [{ kind: 'topup', usd: num(m[3] || 0.11), name: who?.name || m[1] || 'me', phone: who?.phone || null, operator: m[2] || who?.operator || 'jio', demo: !!who?.demo }];
   }
   // "send sakshi a $25 starbucks card"
   if ((m = t.match(new RegExp(`\\b(?:send|gift|buy|get)\\s+(?:(\\w+)\\s+)?(?:an?\\s+)?\\$?(\\d[\\d,.]*)?\\s*(${BRANDS.join('|')})(?:\\s+(?:gift\\s*card|card|credit))?(?:\\s+(?:to|for)\\s+(\\w+))?`)))) {
@@ -140,7 +140,7 @@ function replyCommand(incoming, from) {
   if (/\b(usdc|stablecoins?|usdt)\b/.test(t)) return `take ${dollars || 100} usdc as zec from ${who}`;
   if (/\binvoice\b/.test(t) && dollars) return `invoice $${dollars} in zec`;
   if (/\b(call|meet|chat|catch up|hop on|sync)\b/.test(t) && /\b(this week|tomorrow|today|next week|monday|tuesday|wednesday|thursday|friday|free|when|time)\b/.test(t)) return 'meet:';
-  if (/\bmy (birthday|bday)\b|\bit'?s my (birthday|bday)\b/.test(t)) return `shop:birthday gift for ${from}: two cards around $20 and one special card around $50`;
+  if (/\bmy (birthday|bday)\b|\bit'?s my (birthday|bday)\b/.test(t)) return `shop:birthday gift for ${from}`;
   if (/\b(landing in|landed in|flying to|going to|trip to)\s+([a-z]+)/.test(t)) return `esim for ${t.match(/\b(?:landing in|landed in|flying to|going to|trip to)\s+([a-z]+(?:\s[a-z]+)?)/)[1]}`;
   if (/\b(zec|zcash)\b.*\b(price|worth|rate)\b|how much is (?:a |one )?(zec|zcash)/.test(t)) return 'zec price';
   return null;
@@ -155,7 +155,7 @@ async function fromCommand(cmd, incoming, from) {
     let found = await shop.picks(want);
     if (!found.length) found = await shop.picks(want);
     // The shopper is down: fall back to cards that always deliver instantly.
-    if (!found.length) found = [['starbucks', 20], ['sephora', 25], ['doordash', 50]].map(([brand, usd]) => ({ kind: 'gift', brand, product_id: BRAND_IDS[brand], usd }));
+    if (!found.length) found = [['starbucks', 5], ['sephora', 5], ['doordash', 5]].map(([brand, usd]) => ({ kind: 'gift', brand, product_id: BRAND_IDS[brand], usd }));
     return found.map((c) => ({ ...c, name: who?.name || from || null, email: who?.email || null }));
   }
   if (cmd.startsWith('ask:')) return [{ kind: 'answer', question: cmd.slice(4).trim() || incoming }];
