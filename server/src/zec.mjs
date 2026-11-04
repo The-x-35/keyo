@@ -54,7 +54,10 @@ export async function send(to, amountZec, memo, network) {
   const args = ['send', '--identity', c.identity, '--address', to, '--value', String(zats)];
   // Memos only reach shielded recipients.
   if (memo && /^(u1|utest1|zs|ztestsapling)/.test(to)) args.push('--memo', memo);
-  const { out, err } = await devtool(c, args);
+  const { out, err } = await devtool(c, args).catch((e) => {
+    const why = `${e.stderr || e.message}`.trim().split('\n').pop();
+    throw new Error(/insufficient|InsufficientFunds|not enough/i.test(why) ? `Aegis (${c.net}net) doesn't have enough to send that yet.` : `Aegis send failed: ${why.slice(0, 160)}`);
+  });
   const txid = `${out}\n${err}`.match(/\b[0-9a-f]{64}\b/)?.[0];
   if (!txid) throw new Error(`Aegis send failed: ${`${err || out}`.trim().split('\n').pop().slice(0, 200)}`);
   return { txid, network: c.net, explorer: c.net === 'test' ? `https://testnet.zcashexplorer.app/transactions/${txid}` : `https://mainnet.zcashexplorer.app/transactions/${txid}` };

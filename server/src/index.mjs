@@ -155,15 +155,18 @@ async function act(chip, mode = 'zodl', sandbox = false) {
     case 'zec_send': {
       if (!chip.address) throw new Error(`No Zcash address saved for ${chip.name || 'that contact'}.`);
       const memo = chip.memo || 'Sent with Keyo';
-      if (sandbox) {
+      // Testnet coins are free, so even the test chat's contacts get a real shielded send.
+      const testnet = process.env.AEGIS_NETWORK === 'test';
+      if (sandbox && !testnet) {
         const txid = [...Array(64)].map(() => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
         store.record({ type: 'zec', ok: true, sandbox: true, kind: 'send', amount: chip.amount, to: chip.name, txid });
         return { status: 'done', txid, text: `🛡️ Sent you ${chip.amount} ZEC, shielded.` };
       }
-      if (mode === 'server') {
+      if (mode === 'server' || sandbox) {
         const tx = await zec.send(chip.address, chip.amount, memo);
-        store.record({ type: 'zec', ok: true, kind: 'send', amount: chip.amount, to: chip.name, txid: tx.txid });
-        return { status: 'done', txid: tx.txid, text: `🛡️ Sent you ${chip.amount} ZEC, shielded.` };
+        store.record({ type: 'zec', ok: true, kind: 'send', amount: chip.amount, to: chip.name, txid: tx.txid, network: tx.network });
+        const proof = tx.network === 'test' ? `\n${tx.explorer}` : '';
+        return { status: 'done', txid: tx.txid, text: `🛡️ Sent you ${chip.amount} ${tx.network === 'test' ? 'TAZ' : 'ZEC'}, shielded.${proof}` };
       }
       return { status: 'open', open: zcashUri(chip.address, chip.amount, memo), message: `Confirm ${chip.amount} ZEC in Zodl` };
     }
@@ -196,7 +199,7 @@ async function act(chip, mode = 'zodl', sandbox = false) {
         const inrPerZec = (await swap.prices()).ZEC * (await swap.usdToInr());
         chip = { ...chip, amount: Number((chip.inr / inrPerZec).toFixed(5)) };
       }
-      const mine = process.env.USER_ZEC_ADDRESS || (await zec.address().catch(() => ({}))).unified;
+      const mine = (process.env.AEGIS_NETWORK === 'test' ? null : process.env.USER_ZEC_ADDRESS) || (await zec.address().catch(() => ({}))).unified;
       if (!mine) throw new Error('No Zcash address to receive on');
       const uri = zcashUri(mine, chip.amount, chip.memo || 'Keyo request');
       const why = chip.split ? `Your share of ₹${chip.split.total} is ₹${chip.inr}. ` : '';
