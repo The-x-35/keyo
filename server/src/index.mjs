@@ -351,4 +351,6 @@ http
   .listen(PORT, () => {
     console.log(`Keyo server on :${PORT}`);
     schedule.start(act);
+    // Warm the catalog and the birthday picks so the first gift ideas show at once.
+    suggest('', { incoming: "It's my birthday today!! 🎂🥳", from: 'Sakshi' }).catch(() => {});
   });

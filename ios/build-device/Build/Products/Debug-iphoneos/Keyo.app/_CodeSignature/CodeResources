@@ -26,7 +26,7 @@
 		</data>
 		<key>Keyo.debug.dylib</key>
 		<data>
-		7Rw27UNvpN53S0K1oXF40E4DVrU=
+		abt21Wdcqy49KmR3Clw4EK2J1GM=
 		</data>
 		<key>OFL.txt</key>
 		<data>
@@ -46,11 +46,11 @@
 		</data>
 		<key>PlugIns/KeyoKeyboard.appex/KeyoKeyboard</key>
 		<data>
-		bJczmArytagducT7ij1xSlbTiC0=
+		7m3HUYWZquBQNaXMC5Dz5eyNBKE=
 		</data>
 		<key>PlugIns/KeyoKeyboard.appex/KeyoKeyboard.debug.dylib</key>
 		<data>
-		wnwunVwfmG9HscPN/BAv/vFCSzE=
+		kbY6v2/yOe/lT2QN/8TcPhETcho=
 		</data>
 		<key>PlugIns/KeyoKeyboard.appex/OFL.txt</key>
 		<data>
@@ -58,11 +58,11 @@
 		</data>
 		<key>PlugIns/KeyoKeyboard.appex/_CodeSignature/CodeResources</key>
 		<data>
-		ZkMtdLPSaZL+Um4yP/2NT18ob5E=
+		uhQc/H0GdAok0pD886ImLj6Ach4=
 		</data>
 		<key>PlugIns/KeyoKeyboard.appex/__preview.dylib</key>
 		<data>
-		HO1BUJ6m2MAZzVPCcvct7ztdWgY=
+		zIPAE52bRUYir2vzlbxVUI8nWjk=
 		</data>
 		<key>PlugIns/KeyoKeyboard.appex/embedded.mobileprovision</key>
 		<data>
@@ -70,7 +70,7 @@
 		</data>
 		<key>__preview.dylib</key>
 		<data>
-		KaSNiV2Iy/ekBIsAjeokT7Zo1Go=
+		K2ViAsTURTHNMQABFdL/BO7A4AY=
 		</data>
 		<key>embedded.mobileprovision</key>
 		<data>
@@ -111,7 +111,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			3SiIrGOQjNkUHsm30Yamx3DnXG5k3hmkDOyNLe7oVE8=
+			NYyVkCOV3jWapduIMqp2yLejjYqNkCkdqKLPpi/9Vs4=
 			</data>
 		</dict>
 		<key>OFL.txt</key>
@@ -139,14 +139,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			gK5XNnbDhbYa0fjxfwI+jAqG8bDC2rqKglEowh0s7xw=
+			ZrCOGcziOKollyrGRECqm5dANMCOXucNmTfd0PPSW8Y=
 			</data>
 		</dict>
 		<key>PlugIns/KeyoKeyboard.appex/KeyoKeyboard.debug.dylib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			LihB5duuIWYdoVcRw8ArUc1vajhbkG7rbRBybhw45FM=
+			w7a+RrNzrY9grgOYH0neq/N7hTVQNW7W5JjunRfuM1c=
 			</data>
 		</dict>
 		<key>PlugIns/KeyoKeyboard.appex/OFL.txt</key>
@@ -160,14 +160,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			mUKBz/8J6bIseXIFMbY+WEisEufMMRiEFVv7hb1aRnc=
+			9AFamjmUOQf9E25vWUdGCojU1a7pV6rD6zO321pqbqY=
 			</data>
 		</dict>
 		<key>PlugIns/KeyoKeyboard.appex/__preview.dylib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			lKyXmjiwUPDEW+9cpHpy2dZESpjFFmWqjMnnGq6TXe0=
+			q/SfOJGxJr6Sjf2iVqoXQU2EIfnwtok58CPP/HkauOY=
 			</data>
 		</dict>
 		<key>PlugIns/KeyoKeyboard.appex/embedded.mobileprovision</key>
@@ -181,7 +181,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			+9r9k3w8WA6Gzeol1TvCZGE1DZYBidodWdR2uZej9TA=
+			8deJQBx1aVJNGxDMU4qgWrV5s/i0+ltZZ7HWvbtV004=
 			</data>
 		</dict>
 		<key>embedded.mobileprovision</key>

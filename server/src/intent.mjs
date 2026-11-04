@@ -147,16 +147,21 @@ function replyCommand(incoming, from) {
   return null;
 }
 
+const picked = new Map();
+
 async function fromCommand(cmd, incoming, from) {
   if (!cmd) return [];
   if (cmd.startsWith('meet:')) return meetChips(incoming, from);
   if (cmd.startsWith('shop:')) {
     const want = cmd.slice(5).trim();
     const who = findContact(from);
-    let found = await shop.picks(want);
+    // Picking from the catalog takes the AI several seconds; the same request reuses its picks.
+    const hit = picked.get(want);
+    let found = hit && Date.now() - hit.at < 6 * 3600_000 ? hit.found : await shop.picks(want);
     if (!found.length) found = await shop.picks(want);
     // The shopper is down: fall back to cards that always deliver instantly.
     if (!found.length) found = [['starbucks', 5], ['sephora', 5], ['doordash', 5]].map(([brand, usd]) => ({ kind: 'gift', brand, product_id: BRAND_IDS[brand], usd }));
+    picked.set(want, { at: Date.now(), found });
     return found.map((c) => ({ ...c, name: who?.name || from || null, email: who?.email || null }));
   }
   if (cmd.startsWith('ask:')) return [{ kind: 'answer', question: cmd.slice(4).trim() || incoming }];

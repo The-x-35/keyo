@@ -6,7 +6,7 @@
 	<integer>13</integer>
 	<key>logs</key>
 	<dict>
-		<key>2B7EC374-120E-4264-9C52-CEDBB7D108D7</key>
+		<key>B8FBF900-7C33-43E8-9B8D-DF4560BF1AE2</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>2B7EC374-120E-4264-9C52-CEDBB7D108D7.xcactivitylog</string>
+			<string>B8FBF900-7C33-43E8-9B8D-DF4560BF1AE2.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -29,7 +29,7 @@
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
-				<integer>2</integer>
+				<integer>1</integer>
 			</dict>
 			<key>schemeIdentifier-containerName</key>
 			<string>Keyo project</string>
@@ -40,13 +40,13 @@
 			<key>signature</key>
 			<string>Building project Keyo with scheme Keyo</string>
 			<key>timeStartedRecording</key>
-			<real>815491810.804654</real>
+			<real>815493116.98765004</real>
 			<key>timeStoppedRecording</key>
-			<real>815491814.74454498</real>
+			<real>815493119.81019294</real>
 			<key>title</key>
 			<string>Building project Keyo with scheme Keyo</string>
 			<key>uniqueIdentifier</key>
-			<string>2B7EC374-120E-4264-9C52-CEDBB7D108D7</string>
+			<string>B8FBF900-7C33-43E8-9B8D-DF4560BF1AE2</string>
 		</dict>
 		<key>E567BBC5-F4CC-4B3C-B745-4D020727FB47</key>
 		<dict>

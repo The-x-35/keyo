@@ -103,7 +103,7 @@ enum API {
     static func suggest(_ text: String, incoming: (text: String, from: String)? = nil) async throws -> [Chip] {
         var body: [String: Any] = ["text": text]
         if let incoming { body["incoming"] = incoming.text; body["from"] = incoming.from }
-        let j = try await request("POST", "/suggest", body: body, timeout: 8)
+        let j = try await request("POST", "/suggest", body: body, timeout: 20)
         return (j["chips"] as? [[String: Any]] ?? []).map(Chip.init)
     }
 
