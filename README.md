@@ -33,7 +33,7 @@ Bitrefill's loop is trigger → guarantee → fulfillment → ending. Keyo cover
 - **eCommerce MCP** `https://api.bitrefill.com/mcp`: `buy-products` (balance, USD sub-account, gift emails, `refill_input` for top-ups), `get-invoice-by-id` polled until `all_delivered`, `get-balances`.
 - **REST v2**: US catalog for the shopper, product packages, operator lookup by phone number, eSIM catalog.
 - **Built:** the keyboard, intent rules, proactive replies, Autopilot, standing orders, the Gemini shopper constrained to Bitrefill's catalog, guardrails and approvals. **Reused:** Bitrefill's catalog, payment and delivery.
-- **Real purchases:** `95f033ab-6e7d-4013-90da-65ace1aa888b` (Airtel ₹10 top-up, $0.11, agent-initiated through Keyo's guarded path), `6320a62e-99e5-4f09-9d0e-392f6c80f28b` ($5 Starbucks card emailed by Bitrefill after Face ID approval), invoice `2e4d1b5e-3699-4fa7-a04a-30aec1a6975a` ($0.56 Flipkart card, delivered in 1.6 s) and `0b0b1dbf-9d76-43d0-9772-234a59810266` ($0.56 Flipkart card, bought by Keyo's own flow).
+- **Real purchases:** `95f033ab-6e7d-4013-90da-65ace1aa888b` ($0.11 Airtel top-up, agent-initiated through Keyo's guarded path), `6320a62e-99e5-4f09-9d0e-392f6c80f28b` ($5 Starbucks card emailed by Bitrefill after Face ID approval), invoice `2e4d1b5e-3699-4fa7-a04a-30aec1a6975a` ($0.56 Flipkart card, delivered in 1.6 s) and `0b0b1dbf-9d76-43d0-9772-234a59810266` ($0.56 Flipkart card, bought by Keyo's own flow).
 
 ## Guardrails
 
