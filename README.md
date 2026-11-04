@@ -2,6 +2,8 @@
 
 **The keyboard that pays.** Keyo is an iPhone keyboard that reads the conversation and does the errand for you: Mom says her balance ran out, and the recharge is done before you've typed a word. You only press send.
 
+**Demo video:** https://youtube.com/shorts/OP-um5dl25c
+
 Built at Free Society Hack, Mumbai, 4 Nov 2026, for **Agentic Commerce (Bitrefill)** and **Privacy (Zcash)**.
 
 ## Screenshots
