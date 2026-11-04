@@ -40,6 +40,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSContactsUsageDescription</key>
+	<string>Pay, recharge and gift the people you know by name.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Approve purchases over your limit.</string>
 	<key>UIAppFonts</key>

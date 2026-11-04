@@ -26,6 +26,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        model.resetContext()
         if hasFullAccess { Keyo.keyboardSeen = Date() }
         model.flushPendingInsert()
         model.contextChanged()
@@ -67,6 +68,7 @@ final class KeyboardModel: ObservableObject {
     private let checker = UITextChecker()
 
     private var suggestTask: Task<Void, Never>?
+    private var lastAutopilot: String?
     private var lastContext = ""
 
     var proxy: UITextDocumentProxy? { controller?.textDocumentProxy }
@@ -158,6 +160,8 @@ final class KeyboardModel: ObservableObject {
         contextChanged()
     }
 
+    func resetContext() { lastContext = "\u{0}" }
+
     func flushPendingInsert() {
         if let text = Keyo.pendingInsert, !text.isEmpty {
             Keyo.pendingInsert = nil
@@ -174,10 +178,31 @@ final class KeyboardModel: ObservableObject {
             shift = ctx.isEmpty || ctx.hasSuffix("\n") || (ctx.hasSuffix(" ") && [".", "!", "?"].contains(trimmed.last.map(String.init) ?? ""))
         }
         updateWords(ctx)
-        guard ctx != lastContext else { return }
-        lastContext = ctx
+        let incoming = Keyo.incoming
+        let empty = ctx.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        // An empty box looks unchanged, so a new incoming message has to count as a change.
+        let key = empty ? "incoming:\(incoming?.text ?? "")" : ctx
+        guard key != lastContext else { return }
+        lastContext = key
         suggestTask?.cancel()
         let line = ctx.components(separatedBy: "\n").last ?? ctx
+        if empty, let incoming {
+            // Empty reply box: offer what the other person just asked for.
+            suggestTask = Task {
+                guard hasFullAccess, let found = try? await API.suggest("", incoming: incoming), !Task.isCancelled else { return }
+                chips = found
+                status = nil
+                // One clear action for a fresh message: Autopilot runs it, you just hit send.
+                if Keyo.autopilot, found.count == 1, let chip = found.first,
+                   ["topup", "zec_send", "zec_request", "esim", "gift", "swap"].contains(chip.kind),
+                   lastAutopilot != incoming.text {
+                    lastAutopilot = incoming.text
+                    try? await Task.sleep(nanoseconds: 700_000_000)
+                    if !Task.isCancelled { tap(chip, auto: true) }
+                }
+            }
+            return
+        }
         guard line.trimmingCharacters(in: .whitespaces).count >= 4 else {
             if !busy { chips = []; status = nil }
             return
@@ -189,17 +214,17 @@ final class KeyboardModel: ObservableObject {
                 status = "Turn on Allow Full Access for Keyo"
                 return
             }
-            if let found = try? await API.suggest(line), !Task.isCancelled {
+            if let found = try? await API.suggest(line, incoming: incoming), !Task.isCancelled {
                 chips = found
                 status = nil
             }
         }
     }
 
-    func tap(_ chip: Chip) {
+    func tap(_ chip: Chip, auto: Bool = false) {
         guard !busy else { return }
         busy = true
-        status = working(chip)
+        status = (auto ? "Autopilot · " : "") + working(chip)
         Task {
             defer { busy = false }
             do {

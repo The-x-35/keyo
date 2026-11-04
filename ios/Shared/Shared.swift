@@ -20,8 +20,27 @@ enum Keyo {
     }
     /// Sandbox runs every flow for real except the payment: test codes, test txids.
     static var sandbox: Bool {
-        get { defaults.object(forKey: "sandbox") as? Bool ?? true }
+        get { defaults.object(forKey: "sandbox") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "sandbox") }
+    }
+    /// The last message the other person sent, when the chat app can share it, so the
+    /// keyboard can offer the reply before you type.
+    static var incoming: (text: String, from: String)? {
+        get {
+            guard let t = defaults.string(forKey: "incomingText"),
+                  let at = defaults.object(forKey: "incomingAt") as? Date, Date().timeIntervalSince(at) < 600 else { return nil }
+            return (t, defaults.string(forKey: "incomingFrom") ?? "")
+        }
+        set {
+            defaults.set(newValue?.text, forKey: "incomingText")
+            defaults.set(newValue?.from, forKey: "incomingFrom")
+            defaults.set(Date(), forKey: "incomingAt")
+        }
+    }
+    /// Run the action the moment it's offered, without a tap, when it's under the limit.
+    static var autopilot: Bool {
+        get { defaults.object(forKey: "autopilot") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "autopilot") }
     }
     /// The keyboard stamps this whenever it runs with Full Access (it can't write the group without it).
     static var keyboardSeen: Date? {
@@ -66,8 +85,10 @@ enum API {
         return json
     }
 
-    static func suggest(_ text: String) async throws -> [Chip] {
-        let j = try await request("POST", "/suggest", body: ["text": text], timeout: 8)
+    static func suggest(_ text: String, incoming: (text: String, from: String)? = nil) async throws -> [Chip] {
+        var body: [String: Any] = ["text": text]
+        if let incoming { body["incoming"] = incoming.text; body["from"] = incoming.from }
+        let j = try await request("POST", "/suggest", body: body, timeout: 8)
         return (j["chips"] as? [[String: Any]] ?? []).map(Chip.init)
     }
 

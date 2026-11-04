@@ -41,13 +41,11 @@ struct ChatView: View {
     @State private var draft = ""
     @State private var scene = 0
     @State private var typing = false
-    @State private var sandbox = Keyo.sandbox
     @FocusState private var focused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            scenePicker
             ZStack {
                 wallpaper
                 ScrollViewReader { proxy in
@@ -73,15 +71,16 @@ struct ChatView: View {
         }
         .background(WA.wallpaper)
         .onAppear {
-            sandbox = Keyo.sandbox
             if messages.isEmpty { start(0) }
         }
+        .onLongPressGesture(minimumDuration: 1.2) { restart() }
     }
 
     // MARK: Pieces
 
     private var header: some View {
         HStack(spacing: 10) {
+            Image(systemName: "chevron.left").font(.system(size: 20, weight: .semibold)).foregroundStyle(WA.icon)
             ZStack {
                 Circle().fill(LinearGradient(colors: [Color(hex: 0xE9CC82), Color(hex: 0xB0852F)], startPoint: .top, endPoint: .bottom))
                 Text("M").font(Roman.caps(18, .bold)).foregroundStyle(Color(hex: 0x4A3410))
@@ -92,45 +91,12 @@ struct ChatView: View {
                 Text(typing ? "typing…" : "online").font(.system(size: 12.5)).foregroundStyle(WA.faded)
             }
             Spacer()
-            Button {
-                sandbox.toggle()
-                Keyo.sandbox = sandbox
-            } label: {
-                Text(sandbox ? "SANDBOX" : "LIVE")
-                    .font(Roman.caps(10.5, .bold)).tracking(1.5)
-                    .padding(.horizontal, 10).padding(.vertical, 6)
-                    .foregroundStyle(sandbox ? Roman.gold : .white)
-                    .background(Capsule().fill(sandbox ? Roman.travertine : Roman.porphyry))
-                    .overlay(Capsule().strokeBorder(Roman.goldSoft.opacity(sandbox ? 0.6 : 0), lineWidth: 0.8))
-            }
-            .buttonStyle(.plain)
-            Image(systemName: "video").font(.system(size: 18)).foregroundStyle(WA.icon).padding(.leading, 6)
-            Image(systemName: "phone").font(.system(size: 17)).foregroundStyle(WA.icon).padding(.leading, 10)
+            Image(systemName: "video").font(.system(size: 19)).foregroundStyle(WA.icon)
+            Image(systemName: "phone").font(.system(size: 18)).foregroundStyle(WA.icon).padding(.leading, 16)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(WA.bar)
-    }
-
-    private var scenePicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(Array(Self.scenes.enumerated()), id: \.offset) { i, s in
-                    Button { start(i) } label: {
-                        Label(s.id, systemImage: s.icon)
-                            .font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 12).padding(.vertical, 7)
-                            .foregroundStyle(i == scene ? Color(hex: 0x3A280A) : WA.ink)
-                            .background(Capsule().fill(i == scene ? AnyShapeStyle(LinearGradient(colors: [Color(hex: 0xE9CC82), Color(hex: 0xC09A48)], startPoint: .top, endPoint: .bottom)) : AnyShapeStyle(WA.chip)))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-        }
-        .background(WA.bar)
-        .overlay(alignment: .bottom) { Rectangle().fill(WA.divider).frame(height: 0.5) }
     }
 
     private var wallpaper: some View {
@@ -181,19 +147,6 @@ struct ChatView: View {
 
     private var composer: some View {
         VStack(spacing: 6) {
-            if draft.isEmpty, scene < Self.scenes.count {
-                Button {
-                    draft = Self.scenes[scene].hint
-                    focused = true
-                } label: {
-                    Text(Self.scenes[scene].hint)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Roman.gold)
-                        .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(Capsule().strokeBorder(Roman.goldSoft.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
-                }
-                .buttonStyle(.plain)
-            }
             HStack(alignment: .bottom, spacing: 8) {
                 Image(systemName: "plus").font(.system(size: 20)).foregroundStyle(WA.icon).padding(.bottom, 9)
                 TextField("Message", text: $draft, axis: .vertical)
@@ -219,6 +172,11 @@ struct ChatView: View {
 
     // MARK: Flow
 
+    private func restart() {
+        messages = []
+        start(0)
+    }
+
     private func start(_ i: Int) {
         scene = i
         draft = ""
@@ -235,11 +193,10 @@ struct ChatView: View {
         guard done, scene < Self.scenes.count else { return }
         let finished = scene
         momSays(Self.scenes[finished].thanks, delay: 1.0)
-        if finished + 1 < Self.scenes.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
-                scene = finished + 1
-                momSays(Self.scenes[finished + 1].opener, delay: 0.4)
-            }
+        let next = (finished + 1) % Self.scenes.count
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
+            scene = next
+            momSays(Self.scenes[next].opener, delay: 0.4)
         }
     }
 
@@ -249,6 +206,8 @@ struct ChatView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
                 typing = false
                 messages.append(Message(mine: false, text: text))
+                // The chat shares Mom's latest message with Keyo, like a reply suggestion.
+                Keyo.incoming = (text, "Mom")
             }
         }
     }

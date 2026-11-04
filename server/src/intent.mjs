@@ -39,7 +39,7 @@ function rules(text) {
   let m = t.match(/\b(?:send|pay|transfer)\s+(?:(\w+)\s+)?([\d.]+)\s*zec(?:\s+to\s+(\w+))?/);
   if (m) {
     const who = findContact(m[3] || m[1]);
-    chips.push({ kind: 'zec_send', amount: num(m[2]), name: who?.name || m[3] || m[1] || null, address: who?.zec || null });
+    chips.push({ kind: 'zec_send', amount: num(m[2]), name: who?.name || m[3] || m[1] || null, address: who?.zec || null, demo: !!who?.demo });
   }
 
   // "request 0.5 zec", "you owe me 0.2 zec"
@@ -180,8 +180,39 @@ function label(c) {
   }
 }
 
-export async function suggest(text) {
+// What the other person just said, turned into the reply command Keyo would run for you.
+function replyCommand(incoming, from) {
+  const t = incoming.toLowerCase();
+  const who = (from || 'them').toLowerCase();
+  let m;
+  if (/\b(balance|recharge|data|validity)\b.*\b(over|finished|low|expired|khatam)\b|\bcan'?t call\b/.test(t)) return `recharge ${who}'s phone for 199`;
+  if ((m = t.match(/\b(?:send|give|pay)\s+me\s+([\d.]+)\s*zec/))) return `send ${m[1]} zec to ${who}`;
+  if (/\bwhat do i owe\b|\bhow much do i owe\b|\bmy share\b/.test(t)) return 'request 0.05 zec for dinner';
+  if ((m = t.match(/(?:₹|rs\.?\s?)(\d[\d,]*)\s+(swiggy|zomato|amazon|flipkart|blinkit|myntra|uber|bookmyshow)/))) return `send ${who} a ${m[1]} ${m[2]} gift card`;
+  if ((m = t.match(/\b(?:landing in|flying to|going to|trip to|travell?ing to)\s+([a-z]+(?:\s[a-z]+)?)/))) return `get ${who} an esim for ${m[1].replace(/\b(tomorrow|today|tonight|next|this)\b.*$/, '').trim()}`;
+  if (/\b(zec|zcash)\b.*\b(dollars|usd|usdc|cash out)\b/.test(t)) return 'swap 0.01 zec to usdc';
+  if (/\bbirthday\b/.test(t)) {
+    const name = incoming.match(/\b([A-Z][a-z]+)'s birthday/)?.[1];
+    return `happy birthday${name ? ' ' + name.toLowerCase() : ''}!`;
+  }
+  if (/\b(tired to cook|hungry|starving|nothing to eat|no food)\b/.test(t)) return 'order some food';
+  if (/\b(zec|zcash)\b.*\b(price|worth|rate)\b/.test(t)) return 'zec price';
+  return null;
+}
+
+export async function suggest(text, { incoming, from } = {}) {
   let chips = rules(text);
-  if (!chips.length) chips = await ai(text);
-  return chips.slice(0, 3).map((c, i) => ({ id: `${Date.now()}-${i}`, ...label(c), ...c }));
+  // Nothing typed yet: offer the reply the incoming message asks for.
+  if (!chips.length && !text.trim() && incoming) {
+    const cmd = replyCommand(incoming, from);
+    if (cmd) chips = rules(cmd);
+  }
+  if (!chips.length && text.trim()) chips = await ai(text);
+  // People without a real number (the test chat's Mom) never get charged.
+  const sender = from ? findContact(from) : null;
+  return chips.slice(0, 3).map((c, i) => {
+    const who = findContact(c.name);
+    const demo = c.demo || !!who?.demo || (!!sender?.demo && (!c.name || c.name.toLowerCase() === sender.name.toLowerCase()));
+    return { id: `${Date.now()}-${i}`, ...label(c), ...c, demo };
+  });
 }

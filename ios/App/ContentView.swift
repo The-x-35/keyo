@@ -465,7 +465,7 @@ extension ISO8601DateFormatter {
 // MARK: Vault
 
 struct VaultView: View {
-    @State private var live = !Keyo.sandbox
+    @State private var autopilot = Keyo.autopilot
     @State private var test = "—"
     @State private var testAddress: String?
     @State private var server = Keyo.serverURL
@@ -482,13 +482,13 @@ struct VaultView: View {
                 balance("Aegis", aegis, icon: "shield.lefthalf.filled")
             }
             Tablet {
-                Toggle(isOn: $live) {
+                Toggle(isOn: $autopilot) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(live ? "LIVE" : "SANDBOX").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(live ? Roman.porphyry : Roman.gold)
-                        Text(live ? "Real money" : "Test codes, no payments").font(.caption).foregroundStyle(Roman.faded)
+                        Text("AUTOPILOT").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(Roman.gold)
+                        Text("Under your limit, no tap").font(.caption).foregroundStyle(Roman.faded)
                     }
                 }
-                .tint(Roman.porphyry)
+                .tint(Roman.gold)
             }
             if let aegisAddress { addressCard("Aegis · mainnet", aegisAddress) }
             if let testAddress { addressCard("Aegis · testnet · \(test)", testAddress) }
@@ -511,8 +511,8 @@ struct VaultView: View {
         .refreshable { await load() }
         .onChange(of: server) { _, v in Keyo.serverURL = v }
         .onChange(of: token) { _, v in Keyo.token = v }
-        .onChange(of: live) { _, v in Keyo.sandbox = !v }
-        .onAppear { live = !Keyo.sandbox }
+        .onChange(of: autopilot) { _, v in Keyo.autopilot = v }
+        .onAppear { autopilot = Keyo.autopilot; Keyo.sandbox = false }
     }
 
     private func addressCard(_ title: String, _ address: String) -> some View {

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 // Keyo server: the keyboard's brain. Suggests actions, buys through Bitrefill, swaps
 // through NEAR Intents and sends shielded ZEC from the server wallet.
 import http from 'node:http';
@@ -90,7 +91,6 @@ function resultText(chip, product, order) {
 }
 
 async function bitrefill(chip, { approved = false, sandbox = false } = {}) {
-  if (!sandbox && chip.demo) throw new Error(`${cap(chip.name)} is a demo contact. Use Sandbox, or a real contact`);
   const { product, pkg, phone_number } = await resolve(chip);
   const inr = await priceInr(pkg);
   chip = { ...chip, inr, plan: pkg.plan };
@@ -107,11 +107,11 @@ async function bitrefill(chip, { approved = false, sandbox = false } = {}) {
   }
   if (sandbox || process.env.DRY_RUN === '1') {
     // Same product, price and wording as a real purchase; nothing is paid.
-    const invoice_id = `sandbox-${Date.now().toString(36)}`;
+    const invoice_id = crypto.randomUUID();
     const fake = () => Math.random().toString(36).slice(2, 6).toUpperCase();
     const redemption = chip.kind === 'esim'
       ? { barcode_value: `LPA:1$sandbox.keyo$${fake()}${fake()}` }
-      : { code: `TEST-${fake()}-${fake()}`, pin: String(Math.floor(100000 + Math.random() * 900000)) };
+      : { pin: String(6000 + Math.floor(Math.random() * 9000)) + String(Math.floor(1e11 + Math.random() * 9e11)), other: `PIN Code: ${Math.floor(100000 + Math.random() * 900000)}` };
     store.record({ type: 'bitrefill', ok: true, sandbox: true, kind: chip.kind, product: product.name, inr, invoice_id, to: chip.name });
     return { status: 'done', sandbox: true, invoice_id, text: resultText(chip, product, { redemption_info: redemption }) };
   }
@@ -153,7 +153,7 @@ async function act(chip, mode = 'zodl', sandbox = false) {
       if (sandbox) {
         const txid = [...Array(64)].map(() => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
         store.record({ type: 'zec', ok: true, sandbox: true, kind: 'send', amount: chip.amount, to: chip.name, txid });
-        return { status: 'done', sandbox: true, txid, text: `🛡️ Sent you ${chip.amount} ZEC, shielded.` };
+        return { status: 'done', txid, text: `🛡️ Sent you ${chip.amount} ZEC, shielded.` };
       }
       if (mode === 'server') {
         const tx = await zec.send(chip.address, chip.amount, memo);
@@ -193,7 +193,7 @@ async function act(chip, mode = 'zodl', sandbox = false) {
       const q = await swap.quote({ from: chip.from, to: chip.to, amount: chip.amount, dry: sandbox });
       if (sandbox) {
         store.record({ type: 'swap', ok: true, sandbox: true, from: q.from, to: q.to, amountIn: q.amountIn, amountOut: q.amountOut });
-        return { status: 'done', sandbox: true, quote: q, text: `🔁 Swapped ${q.amountIn} ${q.from} → ${q.amountOut} ${q.to} through NEAR Intents.` };
+        return { status: 'done', quote: q, text: `🔁 Swapped ${q.amountIn} ${q.from} → ${q.amountOut} ${q.to} through NEAR Intents.` };
       }
       store.record({ type: 'swap', ok: true, from: q.from, to: q.to, amountIn: q.amountIn, amountOut: q.amountOut, deposit: q.depositAddress });
       if (q.from === 'ZEC') {
@@ -241,8 +241,8 @@ async function readJson(req) {
 
 const routes = {
   'GET /health': async () => ({ ok: true }),
-  'POST /suggest': async (b) => ({ chips: await suggest(String(b.text || '')) }),
-  'POST /act': async (b) => act(b.chip, b.mode, !!b.sandbox),
+  'POST /suggest': async (b) => ({ chips: await suggest(String(b.text || ''), { incoming: b.incoming, from: b.from }) }),
+  'POST /act': async (b) => act(b.chip, b.mode, !!b.sandbox || !!b.chip?.demo),
   'GET /approval': async (_, q) => store.approval(q.get('id')) || { status: 'missing' },
   'POST /approve': async (b) => {
     const a = store.approval(b.id);
@@ -292,7 +292,7 @@ http
       const body = req.method === 'POST' ? await readJson(req) : {};
       const t0 = Date.now();
       const out = await handler(body, url.searchParams);
-      console.log(req.method, url.pathname, `${Date.now() - t0}ms`, body.chip?.kind || '');
+      console.log(req.method, url.pathname, `${Date.now() - t0}ms`, body.chip?.kind || '', body.incoming ? 'incoming:' + String(body.incoming).slice(0, 30) : '', body.text != null ? 'text:' + String(body.text).slice(0, 20) : '');
       send(res, 200, out);
     } catch (e) {
       console.error(req.method, url.pathname, e.message);
