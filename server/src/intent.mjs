@@ -5,12 +5,12 @@ import { contacts } from './store.mjs';
 const OPERATORS = ['jio', 'airtel', 'vi', 'bsnl'];
 const BRANDS = ['swiggy', 'zomato', 'amazon', 'flipkart', 'blinkit', 'bigbasket', 'myntra', 'uber', 'bookmyshow', 'hotstar', 'makemytrip', 'apollo', 'phonepe', 'jiomart'];
 const OCCASIONS = [
-  [/\b(happy\s*b(irth)?day|hbd|bday)\b/i, 'birthday', ['swiggy', 'amazon']],
-  [/\bcongrat(s|ulations)?\b/i, 'congrats', ['zomato', 'amazon']],
-  [/\b(anniversary)\b/i, 'anniversary', ['bookmyshow', 'swiggy']],
-  [/\b(get well|feel better)\b/i, 'get well', ['apollo', 'swiggy']],
-  [/\b(thank(s| you) so much|owe you one)\b/i, 'thanks', ['swiggy', 'zomato']],
-  [/\b(hungry|starving|no food|order (some )?food)\b/i, 'food', ['swiggy', 'zomato']],
+  [/\b(happy\s*b(irth)?day|hbd|bday)\b/i, 'birthday', ['flipkart', 'zomato']],
+  [/\bcongrat(s|ulations)?\b/i, 'congrats', ['flipkart', 'zomato']],
+  [/\b(anniversary)\b/i, 'anniversary', ['bookmyshow', 'flipkart']],
+  [/\b(get well|feel better)\b/i, 'get well', ['apollo', 'zomato']],
+  [/\b(thank(s| you) so much|owe you one)\b/i, 'thanks', ['zomato', 'flipkart']],
+  [/\b(hungry|starving|no food|order (some )?food)\b/i, 'food', ['zomato', 'swiggy']],
 ];
 const TRIPS = /\b(?:going to|flying to|landing in|trip to|travell?ing to|landed in|reach(?:ing)?)\s+([a-z]+(?:\s[a-z]+)?)/i;
 
@@ -79,7 +79,7 @@ function rules(text) {
   // Travel talk suggests an eSIM.
   m = t.match(TRIPS);
   if (m && !chips.length) {
-    const place = m[1].replace(/\b(next|this|tomorrow|today|week|month)\b.*$/, '').trim();
+    const place = m[1].replace(/\b(next|this|tomorrow|today|tonight|soon|week|month|morning|evening|night|on|for|in|at|by)\b.*$/, '').trim();
     if (place && !['the', 'my', 'a', 'office', 'home', 'work'].includes(place)) chips.push({ kind: 'esim', country: place });
   }
 
@@ -126,7 +126,7 @@ Message: """${text.slice(-400)}"""`;
       const who = findContact(c.name);
       if (c.kind === 'topup') return { ...c, phone: who?.phone || null, operator: c.operator || who?.operator, name: who?.name || c.name };
       if (c.kind === 'zec_send') return { ...c, address: who?.zec || null, name: who?.name || c.name };
-      if (c.kind === 'gift') return { ...c, brand: BRANDS.includes(c.brand) ? c.brand : 'amazon', amount: Number(c.amount) || 100 };
+      if (c.kind === 'gift') return { ...c, brand: BRANDS.includes(c.brand) ? c.brand : 'flipkart', amount: Number(c.amount) || 100 };
       return c;
     });
   } catch {

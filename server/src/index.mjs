@@ -26,12 +26,11 @@ const CAP_PER_DAY = Number(process.env.CAP_PER_DAY_INR || 1000);
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const maskPhone = (p) => (p ? p.replace(/^(\+\d{2})(\d{2})\d+(\d{3})$/, '$1 $2•••••$3') : p);
 
-async function priceInr(pkg, product) {
-  const cur = (product.currency || pkg.currency || '').toUpperCase();
-  if (cur === 'INR' && Number.isFinite(pkg.value)) return pkg.value;
-  if (pkg.price) return Math.round(Number(pkg.price) * (await swap.usdToInr()));
-  return pkg.value;
+async function priceInr(pkg) {
+  return pkg.inr;
 }
+
+const OPERATOR_PRODUCTS = { jio: 'reliance-jio-india-bundles', airtel: 'airtel-india', vi: 'vodafone-india', bsnl: 'bsnl-india' };
 
 // Resolves a top-up, gift or eSIM chip to a Bitrefill product and package.
 async function resolve(chip) {
@@ -45,7 +44,8 @@ async function resolve(chip) {
       const op = ops.find((o) => `${o.id} ${o.name}`.toLowerCase().includes(want)) || ops[0];
       productId = op?.id;
     } catch {}
-    if (!productId) productId = (await br.findProduct(chip.operator || 'jio', { type: 'phone_refill' })).id;
+    if (!productId) productId = OPERATOR_PRODUCTS[(chip.operator || 'jio').toLowerCase()];
+    if (!productId) productId = (await br.findProduct(`${chip.operator} india`, { type: 'phone_number' })).id;
     const product = await br.product(productId);
     return { product, pkg: br.pickPackage(product, chip.amount), phone_number: chip.phone };
   }
@@ -55,9 +55,12 @@ async function resolve(chip) {
     return { product, pkg: br.pickPackage(product, chip.amount) };
   }
   if (chip.kind === 'esim') {
-    const found = await br.findProduct(`${chip.country} esim`, { country: '' });
-    const product = await br.product(found.id);
-    return { product, pkg: br.pickPackage(product, 0) };
+    const product = await br.esimFor(chip.country);
+    // Cheapest bundle; prices are in USD.
+    const k = [...(product.packages || [])].sort((a, b) => a.amount - b.amount)[0];
+    if (!k) throw new Error(`No eSIM bundles for ${chip.country}`);
+    const inr = Math.round(Number(k.amount) * (await swap.usdToInr()));
+    return { product, pkg: { value: k.value, inr, plan: k.value, esim: true } };
   }
   throw new Error(`Not a Bitrefill action: ${chip.kind}`);
 }
@@ -65,10 +68,18 @@ async function resolve(chip) {
 function resultText(chip, product, order) {
   const name = product.name || cap(chip.brand || chip.operator);
   if (chip.kind === 'topup') {
-    return `✅ Recharged ${maskPhone(chip.phone)} with ${name} ₹${chip.amount}. It should land in a minute.`;
+    const plan = chip.plan ? ` (${chip.plan})` : '';
+    return `✅ Recharged ${maskPhone(chip.phone)} with ${product.base_name || name} ₹${chip.inr ?? chip.amount}${plan}. It should land in a minute.`;
   }
   const r = order?.redemption_info || {};
-  const lines = [chip.kind === 'esim' ? `📶 ${name} eSIM` : `🎁 ₹${chip.amount} ${name} gift card for you${chip.occasion ? ` (${chip.occasion})` : ''}!`];
+  if (chip.kind === 'esim') {
+    const lines = [`📶 ${product.base_name || name} · ${chip.plan}`];
+    // Apple's one-tap install link opens the eSIM setup straight from the chat.
+    if (r.barcode_value) lines.push(`Install: https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=${encodeURIComponent(r.barcode_value)}`);
+    else if (r.instructions) lines.push(r.instructions);
+    return lines.join('\n');
+  }
+  const lines = [`🎁 ₹${chip.inr ?? chip.amount} ${product.base_name || name} gift card for you${chip.occasion ? ` (${chip.occasion})` : ''}!`];
   if (r.code) lines.push(`Code: ${r.code}`);
   if (r.pin) lines.push(`PIN: ${r.pin}`);
   if (r.link) lines.push(`Redeem: ${r.link}`);
@@ -78,7 +89,8 @@ function resultText(chip, product, order) {
 
 async function bitrefill(chip, { approved = false } = {}) {
   const { product, pkg, phone_number } = await resolve(chip);
-  const inr = await priceInr(pkg, product);
+  const inr = await priceInr(pkg);
+  chip = { ...chip, inr, plan: pkg.plan };
   const spent = store.spentToday();
   if (!approved && (inr > CAP_PER_PURCHASE || spent + inr > CAP_PER_DAY)) {
     const id = `apr_${Date.now().toString(36)}`;
@@ -90,8 +102,13 @@ async function bitrefill(chip, { approved = false } = {}) {
       message: `₹${inr} is over your limit (₹${CAP_PER_PURCHASE} a purchase, ₹${CAP_PER_DAY - spent} left today). Approve it in Keyo.`,
     };
   }
-  const inv = await br.buy({ product_id: product.id, package_id: pkg.package_id, value: pkg.package_id ? undefined : pkg.value, phone_number });
-  const done = await br.waitDelivered(inv);
+  if (process.env.DRY_RUN === '1') {
+    return { status: 'dry_run', message: `Would buy ${product.id} ${pkg.package_id || pkg.value} for ₹${inr}${phone_number ? ' to ' + maskPhone(phone_number) : ''}`, text: resultText(chip, product, { redemption_info: { code: 'DRY-RUN' } }) };
+  }
+  const inv = pkg.esim
+    ? await br.buyEsim({ product_id: product.id, value: pkg.value })
+    : await br.buy({ product_id: product.id, package_id: pkg.package_id, value: pkg.package_id ? undefined : pkg.value, phone_number });
+  const done = await br.waitDelivered(inv, { esim: !!pkg.esim });
   const entry = store.record({
     type: 'bitrefill',
     ok: !done.pending,

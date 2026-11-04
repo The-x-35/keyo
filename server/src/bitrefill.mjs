@@ -46,36 +46,32 @@ const list = (x) => (Array.isArray(x) ? x : x?.products || x?.items || x?.result
 
 // Picks the product whose name best matches the brand, preferring exact matches.
 export async function findProduct(brand, { country = 'IN', type } = {}) {
-  const items = list(await search(brand, country)).filter((p) => !type || !p.type || p.type === type);
+  // Search ignores the country, so filter it here ("airtel" returns Nigeria first).
+  const all = list(await search(brand, country));
+  const items = all.filter((p) => !country || p.country_code === country).filter((p) => !type || (p.categories || []).includes(type) || p.recipient_type === type);
   if (!items.length) throw new Error(`No Bitrefill product for "${brand}" in ${country}`);
   const b = brand.toLowerCase();
   return (
-    items.find((p) => (p.name || '').toLowerCase() === b) ||
+    items.find((p) => (p.base_name || '').toLowerCase() === b) ||
     items.find((p) => (p.id || '').toLowerCase().startsWith(b)) ||
     items[0]
   );
 }
 
-// Returns { package_id } or { value } for the amount asked, plus the price Bitrefill will charge.
+// Packages look like { id: "flipkart-india<&>100", value: "100", amount: 100 (₹), price }.
+// Plans have names for values ("30GB – 30 Day Data Pack"), so match on the rupee amount.
 export function pickPackage(p, amount) {
-  const pkgs = p.packages || [];
+  const pkgs = (p.packages || []).filter((k) => Number.isFinite(Number(k.amount)));
   if (pkgs.length) {
-    // Values can be numbers ("10") or plan names ("₹199 – 1.5GB/day"): read the first number.
-    const val = (k) => {
-      const n = Number(k.value);
-      if (Number.isFinite(n) && k.value !== '' && k.value != null) return n;
-      const s = String(k.package_value ?? k.name ?? String(k.package_id || '').split('<&>')[1] ?? '');
-      const m = s.replace(/,/g, '').match(/\d+(\.\d+)?/);
-      return m ? Number(m[0]) : NaN;
-    };
-    const exact = pkgs.find((k) => val(k) === Number(amount));
-    const above = pkgs.filter((k) => val(k) >= Number(amount)).sort((a, b) => val(a) - val(b))[0];
-    const k = exact || above || pkgs[pkgs.length - 1];
-    return { package_id: k.package_id, value: val(k), price: k.price ?? k.payment_price, name: k.name || k.package_value };
+    const want = Number(amount);
+    const exact = pkgs.find((k) => Number(k.amount) === want);
+    const k = exact || [...pkgs].sort((a, b) => Math.abs(a.amount - want) - Math.abs(b.amount - want))[0];
+    const named = !/^\d+(\.\d+)?$/.test(String(k.value));
+    return { package_id: k.id, value: k.value, inr: Number(k.amount), plan: named ? k.value : null, exact: !!exact };
   }
   if (p.range) {
     const v = Math.min(Math.max(Number(amount), p.range.min), p.range.max);
-    return { value: v };
+    return { value: v, inr: v, exact: v === Number(amount) };
   }
   throw new Error(`${p.name || p.id} has no packages`);
 }
@@ -91,11 +87,33 @@ export async function buy({ product_id, package_id, value, phone_number }) {
   });
 }
 
-export const invoice = (id) => call(`/invoices/${encodeURIComponent(id)}`);
+// eSIMs have their own endpoints; ids look like bitrefill-esim-united-arab-emirates.
+const PLACES = {
+  dubai: 'united-arab-emirates', 'abu dhabi': 'united-arab-emirates', uae: 'united-arab-emirates',
+  london: 'united-kingdom', uk: 'united-kingdom', england: 'united-kingdom',
+  bangkok: 'thailand', phuket: 'thailand', bali: 'indonesia', tokyo: 'japan', osaka: 'japan',
+  paris: 'france', rome: 'italy', milan: 'italy', berlin: 'germany', amsterdam: 'netherlands',
+  'new york': 'united-states', usa: 'united-states', us: 'united-states', america: 'united-states', 'san francisco': 'united-states',
+  singapore: 'singapore', 'kuala lumpur': 'malaysia', istanbul: 'turkey', europe: 'europe', vietnam: 'vietnam', hanoi: 'vietnam',
+  'sri lanka': 'sri-lanka', colombo: 'sri-lanka', nepal: 'nepal', kathmandu: 'nepal', maldives: 'maldives', seoul: 'south-korea', korea: 'south-korea',
+};
+export async function esimFor(place) {
+  const p = place.toLowerCase().trim();
+  const slug = PLACES[p] || p.replace(/\s+/g, '-');
+  return cached(`e:${slug}`, () => call(`/products/esims/bitrefill-esim-${encodeURIComponent(slug)}`));
+}
+export function buyEsim({ product_id, value }) {
+  return call('/esims', {
+    method: 'POST',
+    body: JSON.stringify({ products: [{ product_id, value, quantity: 1 }], payment_method: 'balance', auto_pay: true }),
+  });
+}
+
+export const invoice = (id, esim = false) => call(`${esim ? '/esims/invoice' : '/invoices'}/${encodeURIComponent(id)}`);
 export const order = (id) => call(`/orders/${encodeURIComponent(id)}`);
 
 // Paid isn't delivered: poll the order until it lands or we run out of time.
-export async function waitDelivered(inv, timeoutMs = 40_000) {
+export async function waitDelivered(inv, { esim = false, timeoutMs = 40_000 } = {}) {
   const start = Date.now();
   let current = inv;
   while (Date.now() - start < timeoutMs) {
@@ -106,7 +124,7 @@ export async function waitDelivered(inv, timeoutMs = 40_000) {
       if (['failed', 'refunded', 'cancelled'].includes(o.status)) throw new Error(`Order ${o.status}`);
     }
     await new Promise((r) => setTimeout(r, 2500));
-    current = await invoice(current.id);
+    current = await invoice(current.id, esim);
   }
   return { invoice: current, order: null, pending: true };
 }
