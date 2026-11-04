@@ -36,6 +36,13 @@ enum ContactsSync {
         for c in current { byName[(c["name"] as? String ?? "").lowercased()] = c }
         for var c in found {
             let key = (c["name"] as? String ?? "").lowercased()
+            // The chats' people keep their own number and email; the phone's contacts never replace them.
+            if byName[key]?["pinned"] as? Bool == true { continue }
+            // A phone contact never takes a chat person's family alias ("mom").
+            if let aliases = c["aliases"] as? [String] {
+                let taken = Set(current.filter { $0["pinned"] as? Bool == true }.flatMap { ($0["aliases"] as? [String] ?? []) + [($0["name"] as? String ?? "").lowercased()] })
+                c["aliases"] = aliases.filter { !taken.contains($0) }
+            }
             if let old = byName[key] {
                 c["zec"] = old["zec"] ?? ""
                 c["operator"] = old["operator"] ?? guessOperator()

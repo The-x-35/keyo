@@ -7,7 +7,8 @@
     "name": "Me",
     "operator": "jio",
     "zec": "",
-    "phone": ""
+    "phone": "",
+    "pinned": true
   },
   {
     "zec": "utest1wqln0qv4cxhpgahx8nuge3mds0r4q4ze62l6qu5k7s2t8rrsvvh6anyys324wpxqzuh73uxpg02xa4hfakw40e7qz0mkvcs3rsx0k60xh0zmrttysltpngd8nh7tx2djhu3jeuf04l2uu3yk5nngp05upkhll8dhs4aj57h05unpjlhn",
@@ -20,7 +21,8 @@
       "mummy",
       "maa",
       "mother"
-    ]
+    ],
+    "pinned": true
   },
   {
     "name": "Rahul",
@@ -31,7 +33,8 @@
     "operator": "airtel",
     "email": "rahul@example.com",
     "zec": "utest1gldd4akke2d993yddhrut8wpjxuyz88xwavf0m5t57mtcr0tuayu6agrqzvdcagu7lynfw7wze4vypuhwayrxa8v6euh9y0n7c9ekqhcyms9ekqq2xvgwtzkwhr8clkk3az4hcxr2390zsc2u4r0gj78ceaj5uv3aq4e7x0res65kua5",
-    "demo": true
+    "demo": true,
+    "pinned": true
   },
   {
     "name": "Sakshi",
@@ -41,7 +44,8 @@
     "phone": "+919800000003",
     "operator": "jio",
     "email": "sakshi@example.com",
-    "demo": true
+    "demo": true,
+    "pinned": true
   },
   {
     "name": "Alex",
@@ -49,6 +53,7 @@
       "alex"
     ],
     "email": "alex@example.com",
-    "demo": true
+    "demo": true,
+    "pinned": true
   }
 ]

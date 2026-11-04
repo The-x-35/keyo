@@ -5,8 +5,14 @@ enum Keyo {
     static let group = "group.com.arpit.keyo"
     static let defaults = UserDefaults(suiteName: group) ?? .standard
 
+    #if targetEnvironment(simulator)
+    static let defaultServer = "http://localhost:8787"
+    #else
+    static let defaultServer = "http://192.168.0.124:8787"
+    #endif
+
     static var serverURL: String {
-        get { defaults.string(forKey: "serverURL") ?? "http://localhost:8787" }
+        get { defaults.string(forKey: "serverURL") ?? defaultServer }
         set { defaults.set(newValue, forKey: "serverURL") }
     }
     static var token: String {

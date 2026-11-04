@@ -28,7 +28,8 @@ export function zcashUri(address, amount, memo) {
 function findContact(name) {
   if (!name) return null;
   const n = name.toLowerCase().replace(/'s$/, '');
-  return contacts().find((c) => c.name.toLowerCase() === n || (c.aliases || []).includes(n)) || null;
+  // An exact name beats an alias, so the chat's "Mom" wins over a phone contact nicknamed mom.
+  return contacts().find((c) => c.name.toLowerCase() === n) || contacts().find((c) => (c.aliases || []).includes(n)) || null;
 }
 
 function rules(text) {

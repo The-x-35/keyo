@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>13</integer>
+	<key>logs</key>
+	<dict>
+		<key>0D1C44DB-1E32-48CF-8FE6-004C4BCA1019</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>0D1C44DB-1E32-48CF-8FE6-004C4BCA1019.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>4</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Keyo project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Keyo</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project Keyo with scheme Keyo</string>
+			<key>timeStartedRecording</key>
+			<real>815489290.30828905</real>
+			<key>timeStoppedRecording</key>
+			<real>815489293.40414095</real>
+			<key>title</key>
+			<string>Building project Keyo with scheme Keyo</string>
+			<key>uniqueIdentifier</key>
+			<string>0D1C44DB-1E32-48CF-8FE6-004C4BCA1019</string>
+		</dict>
+		<key>3DFE43C9-3E81-4753-BEEF-40C5090E1EBD</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>3DFE43C9-3E81-4753-BEEF-40C5090E1EBD.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>4</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Keyo project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Keyo</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project Keyo with scheme Keyo</string>
+			<key>timeStartedRecording</key>
+			<real>815489217.37752295</real>
+			<key>timeStoppedRecording</key>
+			<real>815489219.11929297</real>
+			<key>title</key>
+			<string>Building project Keyo with scheme Keyo</string>
+			<key>uniqueIdentifier</key>
+			<string>3DFE43C9-3E81-4753-BEEF-40C5090E1EBD</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
