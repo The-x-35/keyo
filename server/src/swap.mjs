@@ -27,12 +27,15 @@ export async function prices() {
   return map;
 }
 
-let inr = { at: 0, rate: 0 };
-export async function usdToInr() {
-  if (Date.now() - inr.at < 3600_000 && inr.rate) return inr.rate;
-  const r = await fetch('https://open.er-api.com/v6/latest/USD').then((x) => x.json()).catch(() => null);
-  inr = { at: Date.now(), rate: r?.rates?.INR || 88 };
-  return inr.rate;
+// Units of a currency per US dollar, for products priced locally (an Indian phone plan).
+let fxCache = { at: 0, rates: null };
+export async function fx(currency = 'USD') {
+  if (currency === 'USD') return 1;
+  if (!fxCache.rates || Date.now() - fxCache.at > 3600_000) {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD').then((x) => x.json()).catch(() => null);
+    fxCache = { at: Date.now(), rates: r?.rates || fxCache.rates || {} };
+  }
+  return fxCache.rates[currency] || 1;
 }
 
 // Where swapped funds go and where refunds return, per chain. Set in server/.env.

@@ -22,12 +22,12 @@ struct KeyboardView: View {
     ]
     private let digits = [
         ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
-        ["-", "/", ":", ";", "(", ")", "₹", "&", "@", "\""],
+        ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""],
         [".", ",", "?", "!", "'"],
     ]
     private let symbols = [
         ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
-        ["_", "\\", "|", "~", "<", ">", "$", "€", "£", "•"],
+        ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
         [".", ",", "?", "!", "'"],
     ]
 
@@ -218,7 +218,7 @@ struct ChipView: View {
         case "price": return "chart.line.uptrend.xyaxis"
         case "answer": return "sparkles"
         case "schedule": return "calendar.badge.clock"
-        case "dth": return "tv.fill"
+        case "meet": return "calendar"
         case "swap_in": return "arrow.down.circle.fill"
         default: return "shield.lefthalf.filled"
         }

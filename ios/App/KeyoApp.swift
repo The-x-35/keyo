@@ -36,10 +36,10 @@ struct ApproveView: View {
             Medallion(size: 72).padding(.top, 36)
             Text("APPROVE").font(Roman.caps(26, .black)).tracking(6).foregroundStyle(Roman.ink)
             GoldRule().padding(.horizontal, 40)
-            if let inr = request["inr"] {
+            if let usd = request["usd"] {
                 let chip = request["chip"] as? [String: Any] ?? [:]
                 VStack(spacing: 6) {
-                    Text("₹\(String(describing: inr))").font(Roman.caps(44, .bold)).foregroundStyle(Roman.ink)
+                    Text(Money.text(usd)).font(Roman.caps(44, .bold)).foregroundStyle(Roman.ink)
                     Text(chip["title"] as? String ?? (request["product"] as? String ?? ""))
                         .font(.headline).foregroundStyle(Roman.faded).multilineTextAlignment(.center)
                 }

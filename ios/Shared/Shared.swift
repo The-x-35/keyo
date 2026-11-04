@@ -96,3 +96,11 @@ enum API {
         try await request("POST", "/act", body: ["chip": chip.raw, "mode": Keyo.walletMode, "sandbox": Keyo.sandbox], timeout: 240)
     }
 }
+
+/// Dollars as people write them: $25, $2.38.
+enum Money {
+    static func text(_ any: Any) -> String {
+        let n = (any as? NSNumber)?.doubleValue ?? Double("\(any)") ?? 0
+        return n.rounded() == n ? "$\(Int(n))" : String(format: "$%.2f", n)
+    }
+}

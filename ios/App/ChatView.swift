@@ -46,31 +46,26 @@ struct ChatThread: Identifiable {
 
     static let all: [ChatThread] = [
         ChatThread(id: "mom", name: "Mom", avatar: "M", tint: Color(hex: 0xC9A04A), members: [], scenes: [
-            Scene(opener: say("Mom", "My phone balance is over 😟 I can't call your father"), thanks: say("Mom", "It worked! Thank you ❤️")),
-            Scene(opener: say("Mom", "The TV stopped working, it says recharge Tata Play 📺"), thanks: say("Mom", "Channels are back 😄")),
-            Scene(opener: say("Mom", "Can you recharge my phone every month so I don't have to ask? 🙈"), thanks: say("Mom", "No more asking 😄")),
-        ]),
-        ChatThread(id: "rahul", name: "Rahul", avatar: "R", tint: Color(hex: 0x3A7BD5), members: [], scenes: [
-            Scene(opener: say("Rahul", "Dinner was ₹2,400 for the 3 of us. Send me your share when you can 🙏"), thanks: say("Rahul", "Got it bro, and nobody can see it 🛡️")),
-            Scene(opener: say("Rahul", "Valorant tonight? I'm out of points 😭"), thanks: say("Rahul", "LET'S GO 🔥")),
-            Scene(opener: say("Rahul", "Can you lend me some money till Friday? Like 500"), thanks: say("Rahul", "Lifesaver 🙏 paying you back Friday")),
+            Scene(opener: say("Mom", "My phone balance is over 😟 I can't call your father"),
+                  thanks: say("Mom", "It worked! Thank you ❤️")),
+            Scene(opener: say("Mom", "Can you do this every month so I don't have to ask? 🙈"),
+                  thanks: say("Mom", "No more asking 😄")),
         ]),
         ChatThread(id: "priya", name: "Priya", avatar: "P", tint: Color(hex: 0xD45D8A), members: [], scenes: [
-            Scene(opener: say("Priya", "Just landed in London ✈️ no data and the airport wifi is awful 😩"), thanks: say("Priya", "Installed in one tap, I'm online!! 😮")),
-            Scene(opener: say("Priya", "Btw it's my birthday today 🎂🥳"), thanks: say("Priya", "Aww just got the email 🥹 thank you!!")),
-            Scene(opener: say("Priya", "My laptop charger died and I have a presentation tomorrow 😭"), thanks: say("Priya", "Ordering one now, you're the best")),
+            Scene(opener: say("Priya", "It's my birthday today!! 🎂🥳"),
+                  thanks: say("Priya", "Aww just got the email 🥹 thank you!!")),
+        ]),
+        ChatThread(id: "rahul", name: "Rahul", avatar: "R", tint: Color(hex: 0x3A7BD5), members: [], scenes: [
+            Scene(opener: say("Rahul", "Dinner was $90 for the 3 of us. Send me your share when you can 🙏"),
+                  thanks: say("Rahul", "Got it, and nobody can see it 🛡️")),
         ]),
         ChatThread(id: "alex", name: "Alex (Client)", avatar: "A", tint: Color(hex: 0x2E9E7A), members: [], scenes: [
-            Scene(opener: say("Alex", "The logo is perfect! 🙌 Send me your invoice, $150. Happy to pay in ZEC"), thanks: say("Alex", "Paying now 👍")),
-            Scene(opener: say("Alex", "Actually I only hold USDC on Solana. Can I pay the $150 in that?"), thanks: say("Alex", "Sent ✅ pleasure working with you")),
-        ]),
-        ChatThread(id: "goa", name: "Goa Trip 🏖️", avatar: "G", tint: Color(hex: 0xE08A2E), members: ["Neha", "Rahul"], scenes: [
-            Scene(opener: say("Neha", "Villa came to ₹16,000 for the 4 of us. Arpit, how much each?"), thanks: say("Rahul", "Paying mine now 🙌")),
-            Scene(opener: say("Rahul", "What time is sunset in Goa today?"), thanks: say("Neha", "Perfect, beach at 5 then 🌅")),
-        ]),
-        ChatThread(id: "team", name: "Design Team", avatar: "D", tint: Color(hex: 0x7A5AC8), members: ["Karan", "Ananya"], scenes: [
-            Scene(opener: say("Karan", "It's Ananya's last day 🥲 Let's get her something nice, under ₹2000"), thanks: say("Karan", "She's going to love it ❤️")),
-            Scene(opener: say("Karan", "Lunch on the team today? 🍕"), thanks: say("Karan", "Pizza party 🍕🍕")),
+            Scene(opener: say("Alex", "Loved the first draft! Can we hop on a call this week to go over it?"),
+                  thanks: say("Alex", "Perfect, see you then 👍")),
+            Scene(opener: say("Alex", "Great call. Send me your invoice for the $150, happy to pay in ZEC"),
+                  thanks: say("Alex", "Paying now")),
+            Scene(opener: say("Alex", "Actually I only hold USDC on Solana. Can I pay the $150 in that?"),
+                  thanks: say("Alex", "Sent ✅ pleasure working with you")),
         ]),
     ]
 }
@@ -113,7 +108,9 @@ final class ChatStore: ObservableObject {
         let i = scene[t.id] ?? 0
         guard i < t.scenes.count else { return }
         say(t.scenes[i].thanks, in: t, after: 1.0)
-        let next = (i + 1) % t.scenes.count
+        let next = i + 1
+        scene[t.id] = next
+        guard next < t.scenes.count else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
             self.scene[t.id] = next
             self.say(t.scenes[next].opener, in: t, after: 0.4)

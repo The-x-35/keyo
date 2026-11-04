@@ -74,12 +74,12 @@ struct ForumView: View {
     @FocusState private var focused: Bool
 
     private let spells = [
-        ("iphone.gen3", "recharge mom's jio for 199"),
-        ("gift", "happy birthday bro!"),
-        ("shield.lefthalf.filled", "send 0.01 zec to rahul"),
-        ("arrow.down.left", "request 0.05 zec for dinner"),
+        ("iphone.gen3", "recharge mom's phone"),
+        ("gift", "send priya a $20 starbucks card"),
+        ("shield.lefthalf.filled", "send rahul $30 in zec"),
+        ("arrow.down.left", "invoice $150 in zec"),
+        ("calendar", "free for a call thursday?"),
         ("arrow.triangle.2.circlepath", "swap 0.01 zec to usdc"),
-        ("simcard", "landing in dubai tomorrow"),
     ]
 
     var body: some View {
@@ -373,9 +373,10 @@ struct PersonEditor: View {
 struct LedgerView: View {
     @State private var items: [[String: Any]] = []
     @State private var orders: [[String: Any]] = []
-    @State private var spent = 0
-    @State private var perDay = 0
-    @State private var perPurchase = 0
+    @State private var events: [[String: Any]] = []
+    @State private var spent = 0.0
+    @State private var perDay = 0.0
+    @State private var perPurchase = 0.0
     @State private var error: String?
 
     var body: some View {
@@ -385,16 +386,26 @@ struct LedgerView: View {
                 HStack(alignment: .lastTextBaseline) {
                     VStack(alignment: .leading, spacing: 4) {
                         Eyebrow(text: "Today")
-                        Text("₹\(spent)").font(Roman.caps(34, .bold)).foregroundStyle(Roman.ink)
+                        Text(Money.text(spent)).font(Roman.caps(34, .bold)).foregroundStyle(Roman.ink)
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("of ₹\(perDay)").font(.callout).foregroundStyle(Roman.faded)
-                        Text("₹\(perPurchase) each").font(.caption).foregroundStyle(Roman.faded)
+                        Text("of \(Money.text(perDay))").font(.callout).foregroundStyle(Roman.faded)
+                        Text("\(Money.text(perPurchase)) each").font(.caption).foregroundStyle(Roman.faded)
                     }
                 }
-                ProgressView(value: Double(min(spent, max(perDay, 1))), total: Double(max(perDay, 1)))
+                ProgressView(value: min(spent, max(perDay, 1)), total: max(perDay, 1))
                     .tint(Roman.gold)
+            }
+            if !events.isEmpty {
+                Eyebrow(text: "Calendar")
+                VStack(spacing: 0) {
+                    ForEach(events.indices, id: \.self) { i in
+                        event(events[i], showDay: i == 0 || day(events[i]) != day(events[i - 1]))
+                    }
+                }
+                .padding(.horizontal, 12)
+                .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             if !orders.isEmpty {
                 Eyebrow(text: "Standing orders")
@@ -415,6 +426,30 @@ struct LedgerView: View {
         }
         .task { await load() }
         .refreshable { await load() }
+    }
+
+    private func date(_ e: [String: Any], _ key: String) -> Date? {
+        (e[key] as? String).flatMap { ISO8601DateFormatter.withFraction.date(from: $0) }
+    }
+
+    private func day(_ e: [String: Any]) -> String {
+        date(e, "start")?.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()) ?? ""
+    }
+
+    private func event(_ e: [String: Any], showDay: Bool) -> some View {
+        let keyo = e["by"] as? String == "keyo"
+        return VStack(alignment: .leading, spacing: 6) {
+            if showDay { Text(day(e).uppercased()).font(Roman.caps(11, .bold)).tracking(1.5).foregroundStyle(Roman.gold).padding(.top, 10) }
+            HStack(spacing: 10) {
+                Text(date(e, "start")?.formatted(date: .omitted, time: .shortened) ?? "")
+                    .font(.subheadline.monospacedDigit()).foregroundStyle(Roman.faded).frame(width: 72, alignment: .leading)
+                RoundedRectangle(cornerRadius: 2).fill(keyo ? Roman.gold : Roman.stone).frame(width: 3, height: 22)
+                Text(e["title"] as? String ?? "").font(.subheadline.weight(keyo ? .semibold : .regular)).foregroundStyle(Roman.ink)
+                Spacer()
+                if keyo { Medallion(size: 18) }
+            }
+            .padding(.vertical, 4)
+        }
     }
 
     private func order(_ r: [String: Any]) -> some View {
@@ -460,7 +495,9 @@ struct LedgerView: View {
         switch a["type"] as? String {
         case "bitrefill":
             let icon = a["kind"] as? String == "topup" ? "iphone.gen3" : a["kind"] as? String == "esim" ? "simcard" : "gift"
-            return (icon, "\(a["product"] as? String ?? "") ₹\(a["inr"] ?? "")\(to)")
+            let price = a["usd"].map { " · " + Money.text($0) } ?? ""
+            return (icon, "\(a["product"] as? String ?? "")\(price)\(to)")
+        case "calendar": return ("calendar", "Booked · \(a["title"] as? String ?? "")")
         case "zec": return ("shield.lefthalf.filled", "\(a["amount"] ?? "") ZEC sent\(to)")
         case "swap": return ("arrow.triangle.2.circlepath", "\(a["amountIn"] ?? "") \(a["from"] ?? "") → \(a["amountOut"] ?? "") \(a["to"] ?? "")")
         case "auto": return ("calendar.badge.clock", "On its own · \(a["title"] as? String ?? "")")
@@ -476,12 +513,13 @@ struct LedgerView: View {
     private func load() async {
         do {
             orders = (try? await API.request("GET", "/rules"))?["rules"] as? [[String: Any]] ?? []
+            events = (try? await API.request("GET", "/calendar"))?["events"] as? [[String: Any]] ?? []
             let j = try await API.request("GET", "/activity")
             items = j["activity"] as? [[String: Any]] ?? []
-            spent = j["spentToday"] as? Int ?? 0
+            spent = (j["spentToday"] as? NSNumber)?.doubleValue ?? 0
             let caps = j["caps"] as? [String: Any] ?? [:]
-            perDay = caps["perDay"] as? Int ?? 0
-            perPurchase = caps["perPurchase"] as? Int ?? 0
+            perDay = (caps["perDay"] as? NSNumber)?.doubleValue ?? 0
+            perPurchase = (caps["perPurchase"] as? NSNumber)?.doubleValue ?? 0
             error = nil
         } catch { self.error = error.localizedDescription }
     }

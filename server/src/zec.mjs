@@ -47,6 +47,11 @@ export async function balance(network) {
   return { network: c.net, total: total / 1e8, spendable: spendable / 1e8, raw: j, ...(await address(network)) };
 }
 
+async function txids(c) {
+  const { out } = await devtool(c, ['list-tx']).catch(() => ({ out: '' }));
+  return new Set(out.match(/^[0-9a-f]{64}$/gm) || []);
+}
+
 export async function send(to, amountZec, memo, network) {
   const c = cfg(network);
   await sync(network).catch(() => {});
@@ -54,11 +59,14 @@ export async function send(to, amountZec, memo, network) {
   const args = ['send', '--identity', c.identity, '--address', to, '--value', String(zats)];
   // Memos only reach shielded recipients.
   if (memo && /^(u1|utest1|zs|ztestsapling)/.test(to)) args.push('--memo', memo);
+  // The send's own txid is the one the wallet didn't have before (its output also
+  // mentions older transactions, so grabbing the first hash is wrong).
+  const before = await txids(c);
   const { out, err } = await devtool(c, args).catch((e) => {
     const why = `${e.stderr || e.message}`.trim().split('\n').pop();
     throw new Error(/insufficient|InsufficientFunds|not enough/i.test(why) ? `Aegis (${c.net}net) doesn't have enough to send that yet.` : `Aegis send failed: ${why.slice(0, 160)}`);
   });
-  const txid = `${out}\n${err}`.match(/\b[0-9a-f]{64}\b/)?.[0];
+  const txid = [...(await txids(c))].find((t) => !before.has(t)) || [...`${out}\n${err}`.matchAll(/\b[0-9a-f]{64}\b/g)].map((m) => m[0]).filter((t) => !before.has(t)).pop();
   if (!txid) throw new Error(`Aegis send failed: ${`${err || out}`.trim().split('\n').pop().slice(0, 200)}`);
   return { txid, network: c.net, explorer: c.net === 'test' ? `https://testnet.zcashexplorer.app/transactions/${txid}` : `https://mainnet.zcashexplorer.app/transactions/${txid}` };
 }

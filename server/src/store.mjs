@@ -34,12 +34,26 @@ export function record(entry) {
   return e;
 }
 
-// Rupees spent through Bitrefill today (IST), for the daily cap.
+// Dollars spent through Bitrefill today, for the daily cap.
 export function spentToday() {
-  const day = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
+  const day = new Date().toDateString();
   return state.activity
-    .filter((a) => a.type === 'bitrefill' && a.ok && !a.sandbox && new Date(Date.parse(a.at) + 5.5 * 3600_000).toISOString().slice(0, 10) === day)
-    .reduce((s, a) => s + (Number(a.inr) || 0), 0);
+    .filter((a) => a.type === 'bitrefill' && a.ok && !a.sandbox && new Date(a.at).toDateString() === day)
+    .reduce((s, a) => s + (Number(a.usd) || 0), 0);
+}
+
+// A demo calendar (the real app would read the phone's): events as { id, title, start, end, with, by }.
+export const calendar = () => (state.calendar ||= []);
+export function setCalendar(events) {
+  state.calendar = events;
+  save();
+}
+export function addEvent(e) {
+  const ev = { id: `ev_${Date.now().toString(36)}`, ...e };
+  calendar().push(ev);
+  state.calendar.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  save();
+  return ev;
 }
 
 export function addApproval(id, req) {
@@ -62,5 +76,15 @@ export function saveRule(rule) {
 }
 export function deleteRule(id) {
   state.rules = rules().filter((r) => r.id !== id);
+  save();
+}
+
+// Before a demo: drop test-contact history, standing orders, approvals and Keyo's bookings.
+// Real purchases and real ZEC sends stay.
+export function resetDemo() {
+  state.activity = state.activity.filter((a) => !a.sandbox && (a.type === 'bitrefill' || a.type === 'zec'));
+  state.rules = [];
+  state.approvals = {};
+  state.calendar = [];
   save();
 }

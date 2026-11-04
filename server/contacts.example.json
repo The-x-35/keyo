@@ -20,9 +20,7 @@
       "mummy",
       "maa",
       "mother"
-    ],
-    "dth": "1023456789",
-    "dthProvider": "tata play"
+    ]
   },
   {
     "name": "Rahul",
@@ -51,32 +49,6 @@
       "alex"
     ],
     "email": "alex@example.com",
-    "demo": true
-  },
-  {
-    "name": "Neha",
-    "aliases": [
-      "neha"
-    ],
-    "phone": "+919800000004",
-    "operator": "vi",
-    "email": "neha@example.com",
-    "demo": true
-  },
-  {
-    "name": "Karan",
-    "aliases": [
-      "karan"
-    ],
-    "email": "karan@example.com",
-    "demo": true
-  },
-  {
-    "name": "Ananya",
-    "aliases": [
-      "ananya"
-    ],
-    "email": "ananya@example.com",
     "demo": true
   }
 ]

@@ -208,7 +208,7 @@ final class KeyboardModel: ObservableObject {
                 status = nil
                 // One clear action for a fresh message: Autopilot runs it, you just hit send.
                 if Keyo.autopilot, found.count == 1, let chip = found.first,
-                   ["topup", "dth", "zec_send", "zec_request", "esim", "gift", "swap", "swap_in"].contains(chip.kind),
+                   ["topup", "zec_send", "zec_request", "esim", "gift", "swap", "swap_in"].contains(chip.kind),
                    lastAutopilot != incoming.text {
                     lastAutopilot = incoming.text
                     try? await Task.sleep(nanoseconds: 700_000_000)
@@ -258,7 +258,7 @@ final class KeyboardModel: ObservableObject {
         case "swap": return "Getting a swap quote…"
         case "zec_send": return Keyo.walletMode == "server" || Keyo.sandbox ? "Sending shielded ZEC…" : "Opening Zodl…"
         case "zec_request": return chip.raw["usd"] != nil ? "Writing a shielded invoice…" : "Making a shielded link…"
-        case "dth": return "Recharging the TV…"
+        case "meet": return "Booking it…"
         case "swap_in": return "Getting a NEAR Intents address…"
         case "schedule": return "Setting a standing order…"
         case "answer": return "Thinking…"

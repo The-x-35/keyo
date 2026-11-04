@@ -58,20 +58,22 @@ export async function findProduct(brand, { country = 'IN', type } = {}) {
   );
 }
 
-// Packages look like { id: "flipkart-india<&>100", value: "100", amount: 100 (₹), price }.
+// Packages look like { id, value, amount (face value in the product's currency), price }.
 // Plans have names for values ("30GB – 30 Day Data Pack"), so match on the rupee amount.
 export function pickPackage(p, amount) {
-  const pkgs = (p.packages || []).filter((k) => Number.isFinite(Number(k.amount)));
-  if (pkgs.length) {
-    const want = Number(amount);
-    const exact = pkgs.find((k) => Number(k.amount) === want);
-    const k = exact || [...pkgs].sort((a, b) => Math.abs(a.amount - want) - Math.abs(b.amount - want))[0];
-    const named = !/^\d+(\.\d+)?$/.test(String(k.value));
-    return { package_id: k.id, value: k.value, inr: Number(k.amount), plan: named ? k.value : null, exact: !!exact };
+  // Fixed packages carry the face value in `amount` (or only in `value` for some brands).
+  const face = (k) => Number(k.amount ?? k.value);
+  const pkgs = (p.packages || []).filter((k) => Number.isFinite(face(k)));
+  const want = Number(amount);
+  if (p.range && (!pkgs.length || !pkgs.some((k) => face(k) === want))) {
+    const v = Math.round(Math.min(Math.max(want, p.range.min), p.range.max));
+    return { value: v, local: v, exact: v === want };
   }
-  if (p.range) {
-    const v = Math.min(Math.max(Number(amount), p.range.min), p.range.max);
-    return { value: v, inr: v, exact: v === Number(amount) };
+  if (pkgs.length) {
+    const exact = pkgs.find((k) => face(k) === want);
+    const k = exact || [...pkgs].sort((a, b) => Math.abs(face(a) - want) - Math.abs(face(b) - want))[0];
+    const named = !/^\d+(\.\d+)?$/.test(String(k.value));
+    return { package_id: k.id, value: k.value, local: face(k), plan: named ? k.value : null, exact: !!exact };
   }
   throw new Error(`${p.name || p.id} has no packages`);
 }
