@@ -6,7 +6,7 @@
 	<integer>13</integer>
 	<key>logs</key>
 	<dict>
-		<key>0D1C44DB-1E32-48CF-8FE6-004C4BCA1019</key>
+		<key>1066DB13-155F-4E8D-9191-9821E4F372C6</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>0D1C44DB-1E32-48CF-8FE6-004C4BCA1019.xcactivitylog</string>
+			<string>1066DB13-155F-4E8D-9191-9821E4F372C6.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -40,15 +40,15 @@
 			<key>signature</key>
 			<string>Building project Keyo with scheme Keyo</string>
 			<key>timeStartedRecording</key>
-			<real>815489290.30828905</real>
+			<real>815490109.33953595</real>
 			<key>timeStoppedRecording</key>
-			<real>815489293.40414095</real>
+			<real>815490116.76367605</real>
 			<key>title</key>
 			<string>Building project Keyo with scheme Keyo</string>
 			<key>uniqueIdentifier</key>
-			<string>0D1C44DB-1E32-48CF-8FE6-004C4BCA1019</string>
+			<string>1066DB13-155F-4E8D-9191-9821E4F372C6</string>
 		</dict>
-		<key>3DFE43C9-3E81-4753-BEEF-40C5090E1EBD</key>
+		<key>5AAA98A4-D795-43AC-9800-747733921136</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>3DFE43C9-3E81-4753-BEEF-40C5090E1EBD.xcactivitylog</string>
+			<string>5AAA98A4-D795-43AC-9800-747733921136.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -82,13 +82,13 @@
 			<key>signature</key>
 			<string>Building project Keyo with scheme Keyo</string>
 			<key>timeStartedRecording</key>
-			<real>815489217.37752295</real>
+			<real>815490154.43539298</real>
 			<key>timeStoppedRecording</key>
-			<real>815489219.11929297</real>
+			<real>815490160.416394</real>
 			<key>title</key>
 			<string>Building project Keyo with scheme Keyo</string>
 			<key>uniqueIdentifier</key>
-			<string>3DFE43C9-3E81-4753-BEEF-40C5090E1EBD</string>
+			<string>5AAA98A4-D795-43AC-9800-747733921136</string>
 		</dict>
 	</dict>
 </dict>

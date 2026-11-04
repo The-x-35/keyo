@@ -64,7 +64,7 @@ export async function send(to, amountZec, memo, network) {
   const before = await txids(c);
   const { out, err } = await devtool(c, args).catch((e) => {
     const why = `${e.stderr || e.message}`.trim().split('\n').pop();
-    throw new Error(/insufficient|InsufficientFunds|not enough/i.test(why) ? `Aegis (${c.net}net) doesn't have enough to send that yet.` : `Aegis send failed: ${why.slice(0, 160)}`);
+    throw new Error(/insufficient|InsufficientFunds|not enough/i.test(why) ? "There isn't enough ZEC in the Keyo wallet yet." : `Aegis send failed: ${why.slice(0, 160)}`);
   });
   const txid = [...(await txids(c))].find((t) => !before.has(t)) || [...`${out}\n${err}`.matchAll(/\b[0-9a-f]{64}\b/g)].map((m) => m[0]).filter((t) => !before.has(t)).pop();
   if (!txid) throw new Error(`Aegis send failed: ${`${err || out}`.trim().split('\n').pop().slice(0, 200)}`);

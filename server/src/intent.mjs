@@ -99,26 +99,26 @@ function meetChips(text, from) {
 function label(c) {
   switch (c.kind) {
     case 'zec_send':
-      if (c.usd) return { title: `Send ${money(c.usd)} in ZEC to ${cap(c.name || '')}`, subtitle: c.address ? 'Shielded · live price' : 'No address saved' };
-      return { title: `Send ${c.amount} ZEC${c.name ? ' to ' + cap(c.name) : ''}`, subtitle: c.address ? 'Shielded · Zcash' : 'No address saved' };
+      if (c.usd) return { title: `Send ${money(c.usd)} in ZEC to ${cap(c.name || '')}`, subtitle: c.address ? "Private · today's price" : 'No address saved' };
+      return { title: `Send ${c.amount} ZEC${c.name ? ' to ' + cap(c.name) : ''}`, subtitle: c.address ? 'Private payment' : 'No address saved' };
     case 'zec_request':
-      if (c.split) return { title: `Split ${money(c.split.total)} by ${c.split.people}: ask ${money(c.usd)}`, subtitle: 'Paid in shielded ZEC' };
-      if (c.usd) return { title: `Invoice ${money(c.usd)} in ZEC`, subtitle: 'Shielded · live price' };
-      return { title: `Request ${c.amount} ZEC`, subtitle: 'Shielded link' };
+      if (c.split) return { title: `Split ${money(c.split.total)} by ${c.split.people}: ask ${money(c.usd)}`, subtitle: 'Paid privately in ZEC' };
+      if (c.usd) return { title: `Invoice ${money(c.usd)} in ZEC`, subtitle: "Private · today's price" };
+      return { title: `Request ${c.amount} ZEC`, subtitle: 'Private payment link' };
     case 'swap_in':
-      return { title: `Take ${c.amount} ${c.from} as ZEC`, subtitle: 'NEAR Intents · lands in Zcash' };
+      return { title: `Take ${c.amount} ${c.from} as ZEC`, subtitle: 'They pay USDC, you get ZEC' };
     case 'swap':
-      return { title: `Swap ${c.amount} ${c.from} → ${c.to}`, subtitle: 'NEAR Intents' };
+      return { title: `Swap ${c.amount} ${c.from} → ${c.to}`, subtitle: 'Swap' };
     case 'price':
-      return { title: c.unit === 'USD' ? `${money(c.amount)} in ZEC` : `${c.amount} ZEC in dollars`, subtitle: 'Live price' };
+      return { title: c.unit === 'USD' ? `${money(c.amount)} in ZEC` : `${c.amount} ZEC in dollars`, subtitle: "Today's price" };
     case 'answer':
       return { title: 'Ask Keyo', subtitle: c.question.slice(0, 32) };
     case 'schedule':
-      return { title: `Every ${c.every} · ${label(c.chip).title}`, subtitle: 'Standing order · runs by itself' };
+      return { title: `Every ${c.every} · ${label(c.chip).title}`, subtitle: 'Repeats by itself' };
     case 'topup':
       return { title: `Recharge ${(c.name || '').toLowerCase() === 'me' ? 'my' : cap(c.name) + "'s"} ${cap(c.operator || 'phone')} · ${money(c.usd)}`, subtitle: c.phone ? c.phone.replace(/^(\+\d{1,2})(\d{2})\d+(\d{3})$/, '$1 $2•••••$3') : 'No number saved' };
     case 'gift':
-      return { title: `${c.name ? 'Send ' + cap(c.name) + ' ' : ''}${money(c.usd)} ${cap(c.brand)} card`, subtitle: c.why ? cap(c.why) : c.email ? 'Emailed by Bitrefill' : 'Gift card · Bitrefill' };
+      return { title: `${c.name ? 'Send ' + cap(c.name) + ' ' : ''}${money(c.usd)} ${cap(c.brand)} card`, subtitle: c.why ? cap(c.why) : c.email ? 'Sent to their email' : 'Gift card' };
     case 'esim':
       return { title: `eSIM for ${cap(c.country)}`, subtitle: 'Data on landing' };
     case 'meet':

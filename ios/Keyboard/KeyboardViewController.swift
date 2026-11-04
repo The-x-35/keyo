@@ -180,7 +180,7 @@ final class KeyboardModel: ObservableObject {
         if let text = Keyo.pendingInsert, !text.isEmpty {
             Keyo.pendingInsert = nil
             proxy?.insertText(text)
-            status = "Typed in after approval ✓"
+            status = "Done ✓"
         }
     }
 
@@ -253,14 +253,14 @@ final class KeyboardModel: ObservableObject {
 
     private func working(_ chip: Chip) -> String {
         switch chip.kind {
-        case "topup": return "Recharging through Bitrefill…"
-        case "gift", "esim": return "Buying through Bitrefill…"
-        case "swap": return "Getting a swap quote…"
-        case "zec_send": return Keyo.walletMode == "server" || Keyo.sandbox ? "Sending shielded ZEC…" : "Opening Zodl…"
-        case "zec_request": return chip.raw["usd"] != nil ? "Writing a shielded invoice…" : "Making a shielded link…"
+        case "topup": return "Recharging…"
+        case "gift", "esim": return "Buying the gift card…"
+        case "swap": return "Checking the price…"
+        case "zec_send": return Keyo.walletMode == "server" || Keyo.sandbox ? "Sending ZEC privately…" : "Opening Zodl…"
+        case "zec_request": return chip.raw["usd"] != nil ? "Making the invoice…" : "Making a payment link…"
         case "meet": return "Booking it…"
-        case "swap_in": return "Getting a NEAR Intents address…"
-        case "schedule": return "Setting a standing order…"
+        case "swap_in": return "Making a payment address…"
+        case "schedule": return "Setting it to repeat…"
         case "answer": return "Thinking…"
         default: return "Working…"
         }

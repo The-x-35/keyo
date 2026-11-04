@@ -9,11 +9,11 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $tab) {
-            ForumView().tag(0).tabItem { Label("Forum", systemImage: "building.columns") }
-            ChatView().tag(1).tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right") }
+            ForumView().tag(0).tabItem { Label("Home", systemImage: "building.columns") }
+            ChatView().tag(1).tabItem { Label("Chats", systemImage: "bubble.left.and.bubble.right") }
             PeopleView().tag(2).tabItem { Label("People", systemImage: "person.2") }
-            LedgerView().tag(3).tabItem { Label("Ledger", systemImage: "scroll") }
-            VaultView().tag(4).tabItem { Label("Vault", systemImage: "shield.lefthalf.filled") }
+            LedgerView().tag(3).tabItem { Label("History", systemImage: "scroll") }
+            VaultView().tag(4).tabItem { Label("Wallet", systemImage: "shield.lefthalf.filled") }
         }
         .tint(Roman.gold)
     }
@@ -75,7 +75,7 @@ struct ForumView: View {
 
     private let spells = [
         ("iphone.gen3", "recharge mom's phone"),
-        ("gift", "send sakshi a $20 starbucks card"),
+        ("gift", "send sakshi a $5 starbucks card"),
         ("shield.lefthalf.filled", "send rahul $30 in zec"),
         ("arrow.down.left", "invoice $150 in zec"),
         ("calendar", "free for a call thursday?"),
@@ -93,7 +93,7 @@ struct ForumView: View {
                         .font(Roman.caps(44, .black))
                         .tracking(14)
                         .foregroundStyle(Roman.ink)
-                    Text("PECVNIA · TACITA")
+                    Text("PAY QUIETLY")
                         .font(Roman.caps(11, .semibold))
                         .tracking(4)
                         .foregroundStyle(Roman.gold)
@@ -102,7 +102,7 @@ struct ForumView: View {
 
                 if !keyboardReady {
                     Tablet {
-                        Eyebrow(text: "Raise the keyboard")
+                        Eyebrow(text: "Set up the keyboard")
                         step("1", "Settings › General › Keyboard › Keyboards")
                         step("2", "Add New Keyboard › Keyo")
                         step("3", "Keyo › Allow Full Access")
@@ -113,7 +113,7 @@ struct ForumView: View {
                     Eyebrow(text: "Pay with")
                     HStack(spacing: 10) {
                         modeButton("zodl", title: "Zodl", icon: "iphone")
-                        modeButton("server", title: "Aegis", icon: "shield.lefthalf.filled")
+                        modeButton("server", title: "Keyo wallet", icon: "shield.lefthalf.filled")
                     }
                 }
 
@@ -347,7 +347,7 @@ struct PersonEditor: View {
                         .keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
                 }
                 Section("Zcash") {
-                    TextField("u1…", text: $person.zec, axis: .vertical)
+                    TextField("Zcash address", text: $person.zec, axis: .vertical)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .font(.footnote.monospaced())
                 }
@@ -380,7 +380,7 @@ struct LedgerView: View {
     @State private var error: String?
 
     var body: some View {
-        Page(title: "Ledger") {
+        Page(title: "History") {
             if let error { Text(error).font(.footnote).foregroundStyle(Roman.porphyry) }
             Tablet {
                 HStack(alignment: .lastTextBaseline) {
@@ -408,7 +408,7 @@ struct LedgerView: View {
                 .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             if !orders.isEmpty {
-                Eyebrow(text: "Standing orders")
+                Eyebrow(text: "Repeats")
                 VStack(spacing: 8) {
                     ForEach(orders.indices, id: \.self) { i in order(orders[i]) }
                 }
@@ -500,7 +500,7 @@ struct LedgerView: View {
         case "calendar": return ("calendar", "Booked · \(a["title"] as? String ?? "")")
         case "zec": return ("shield.lefthalf.filled", "\(a["amount"] ?? "") ZEC sent\(to)")
         case "swap": return ("arrow.triangle.2.circlepath", "\(a["amountIn"] ?? "") \(a["from"] ?? "") → \(a["amountOut"] ?? "") \(a["to"] ?? "")")
-        case "auto": return ("calendar.badge.clock", "On its own · \(a["title"] as? String ?? "")")
+        case "auto": return ("calendar.badge.clock", "Repeat · \(a["title"] as? String ?? "")")
         default: return ("circle", a["type"] as? String ?? "")
         }
     }
@@ -549,26 +549,26 @@ struct VaultView: View {
     @State private var aegisAddress: String?
 
     var body: some View {
-        Page(title: "Vault") {
+        Page(title: "Wallet") {
             HStack(spacing: 10) {
                 balance("Bitrefill", bitrefill, icon: "gift")
-                balance("Aegis", aegis, icon: "shield.lefthalf.filled")
+                balance("Zcash", aegis, icon: "shield.lefthalf.filled")
             }
             Tablet {
                 Toggle(isOn: $autopilot) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("AUTOPILOT").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(Roman.gold)
-                        Text("Under your limit, no tap").font(.caption).foregroundStyle(Roman.faded)
+                        Text("Small things, no tap").font(.caption).foregroundStyle(Roman.faded)
                     }
                 }
                 .tint(Roman.gold)
                 Toggle(isOn: $live) {
-                    Text("LIVE").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(live ? Roman.porphyry : Roman.gold)
+                    Text("REAL MONEY").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(live ? Roman.porphyry : Roman.gold)
                 }
                 .tint(Roman.porphyry)
             }
-            if let aegisAddress { addressCard("Aegis · mainnet", aegisAddress) }
-            if let testAddress { addressCard("Aegis · testnet · \(test)", testAddress) }
+            if let aegisAddress { addressCard("Zcash address · mainnet", aegisAddress) }
+            if let testAddress { addressCard("Zcash address · testnet · \(test)", testAddress) }
             Tablet {
                 Eyebrow(text: "Server")
                 TextField("http://192.168.1.10:8787", text: $server)

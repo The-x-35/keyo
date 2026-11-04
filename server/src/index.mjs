@@ -150,19 +150,18 @@ async function act(chip, mode = 'zodl', sandbox = false) {
       if (!chip.address) throw new Error(`No Zcash address saved for ${chip.name || 'that contact'}.`);
       const memo = chip.memo || 'Sent with Keyo';
       if (chip.usd && !chip.amount) chip = { ...chip, amount: Number((chip.usd / (await swap.prices()).ZEC).toFixed(5)) };
-      const worth = chip.usd ? ` (${money(chip.usd)})` : '';
       // Testnet coins are free, so even the test chats' contacts get a real shielded send.
       const testnet = process.env.AEGIS_NETWORK === 'test';
       if (sandbox && !testnet) {
         const txid = [...Array(64)].map(() => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
         store.record({ type: 'zec', ok: true, sandbox: true, kind: 'send', amount: chip.amount, to: chip.name, txid });
-        return { status: 'done', txid, text: `🛡️ Sent you ${chip.amount} ZEC${worth}, shielded.` };
+        return { status: 'done', txid, text: `🛡️ Sent you ${chip.usd ? money(chip.usd) + ' in ZEC' : chip.amount + ' ZEC'}, privately.` };
       }
       if (mode === 'server' || sandbox) {
         const tx = await zec.send(chip.address, chip.amount, memo);
         store.record({ type: 'zec', ok: true, kind: 'send', amount: chip.amount, to: chip.name, txid: tx.txid, network: tx.network });
         const proof = tx.network === 'test' ? `\n${tx.explorer}` : '';
-        return { status: 'done', txid: tx.txid, text: `🛡️ Sent you ${chip.amount} ${tx.network === 'test' ? 'TAZ' : 'ZEC'}${worth}, shielded.${proof}` };
+        return { status: 'done', txid: tx.txid, text: `🛡️ Sent you ${chip.usd ? money(chip.usd) + ' in ZEC' : chip.amount + ' ZEC'}, privately. Only we can see it.${proof}` };
       }
       return { status: 'open', open: zcashUri(chip.address, chip.amount, memo), message: `Confirm ${chip.amount} ZEC in Zodl` };
     }
@@ -197,14 +196,14 @@ async function act(chip, mode = 'zodl', sandbox = false) {
       const mine = (process.env.AEGIS_NETWORK === 'test' ? null : process.env.USER_ZEC_ADDRESS) || (await zec.address().catch(() => ({}))).unified;
       if (!mine) throw new Error('No Zcash address to receive on');
       const uri = zcashUri(mine, chip.amount, chip.memo || 'Keyo request');
-      const why = chip.split ? `Your share of ${money(chip.split.total)} is ${money(chip.usd)}. ` : chip.usd ? `${chip.memo || 'Invoice'}: ${money(chip.usd)}. ` : '';
-      return { status: 'done', text: `${why}Pay me ${chip.amount} ZEC (shielded): ${uri}` };
+      const why = chip.split ? `Your share of ${money(chip.split.total)} is ${money(chip.usd)}. ` : chip.usd ? `Here's my invoice for ${money(chip.usd)}. ` : '';
+      return { status: 'done', text: `${why}Pay ${chip.amount} ZEC privately here: ${uri}` };
     }
 
     case 'swap_in': {
       const q = await swap.quote({ from: chip.from, to: 'ZEC', amount: chip.amount, payer: true });
       store.record({ type: 'swap', ok: true, sandbox: !!sandbox, from: q.from, to: q.to, amountIn: q.amountIn, amountOut: q.amountOut, deposit: q.depositAddress });
-      return { status: 'done', quote: q, text: `Send ${q.amountIn} ${q.from} on Solana to ${q.depositAddress}\nIt reaches me as ${q.amountOut} ZEC through NEAR Intents.` };
+      return { status: 'done', quote: q, text: `Sure! Send ${Number(q.amountIn)} ${q.from} on Solana to this address:\n${q.depositAddress}\nIt reaches me as ZEC.` };
     }
 
     case 'swap': {
