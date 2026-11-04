@@ -52,6 +52,11 @@ async function resolve(chip) {
     const product = await br.product(productId);
     return { product, pkg: br.pickPackage(product, chip.amount), phone_number: chip.phone };
   }
+  if (chip.kind === 'dth') {
+    if (!chip.subscriber) throw new Error(`No TV subscriber ID saved for ${chip.name}. Add it in the Keyo app.`);
+    const product = await br.product(chip.product_id || 'tata-play-india');
+    return { product, pkg: br.pickPackage(product, chip.amount), phone_number: chip.subscriber };
+  }
   if (chip.kind === 'gift') {
     if (chip.product_id) {
       const product = await br.product(chip.product_id);
@@ -74,6 +79,9 @@ async function resolve(chip) {
 
 function resultText(chip, product, order) {
   const name = product.name || cap(chip.brand || chip.operator);
+  if (chip.kind === 'dth') {
+    return `📺 Recharged ${product.base_name || name} ₹${chip.inr ?? chip.amount} for TV ID ••••${String(chip.subscriber).slice(-4)}. The channels come back in a few minutes.`;
+  }
   if (chip.kind === 'topup') {
     const plan = chip.plan ? ` (${chip.plan})` : '';
     return `✅ Recharged ${maskPhone(chip.phone)} with ${product.base_name || name} ₹${chip.inr ?? chip.amount}${plan}. It should land in a minute.`;
@@ -110,20 +118,21 @@ async function bitrefill(chip, { approved = false, sandbox = false } = {}) {
       message: `₹${inr} is over your limit (₹${CAP_PER_PURCHASE} a purchase, ₹${CAP_PER_DAY - spent} left today). Approve it in Keyo.`,
     };
   }
+  // Someone else with an email on file gets the card straight from Bitrefill.
+  const gift = chip.kind === 'gift' && chip.email && chip.name && chip.name.toLowerCase() !== 'me'
+    ? { recipient_name: cap(chip.name), recipient_email: chip.email, sender_name: process.env.SENDER_NAME || 'A friend', message: chip.occasion ? `Happy ${chip.occasion}!` : 'For you' }
+    : null;
+  const emailed = () => `🎁 Sent you a ₹${inr} ${product.base_name || product.name} gift card. Check your email ${chip.email.replace(/^(.).*(@.*)$/, '$1•••$2')}!`;
   if (sandbox || process.env.DRY_RUN === '1') {
     // Same product, price and wording as a real purchase; nothing is paid.
     const invoice_id = crypto.randomUUID();
     const fake = () => Math.random().toString(36).slice(2, 6).toUpperCase();
     const redemption = chip.kind === 'esim'
-      ? { barcode_value: `LPA:1$sandbox.keyo$${fake()}${fake()}` }
+      ? { barcode_value: `LPA:1$rsp.keyo.app$${fake()}${fake()}` }
       : { pin: String(6000 + Math.floor(Math.random() * 9000)) + String(Math.floor(1e11 + Math.random() * 9e11)), other: `PIN Code: ${Math.floor(100000 + Math.random() * 900000)}` };
     store.record({ type: 'bitrefill', ok: true, sandbox: true, kind: chip.kind, product: product.name, inr, invoice_id, to: chip.name });
-    return { status: 'done', sandbox: true, invoice_id, text: resultText(chip, product, { redemption_info: redemption }) };
+    return { status: 'done', sandbox: true, invoice_id, text: gift ? emailed() : resultText(chip, product, { redemption_info: redemption }) };
   }
-  // Someone else with an email on file gets the card straight from Bitrefill.
-  const gift = chip.kind === 'gift' && chip.email && chip.name && chip.name.toLowerCase() !== 'me'
-    ? { recipient_name: cap(chip.name), recipient_email: chip.email, sender_name: process.env.SENDER_NAME || 'A friend', message: chip.occasion ? `Happy ${chip.occasion}!` : 'For you' }
-    : null;
   const inv = await mcp.buy({ product_id: product.id, package_value: pkg.value, refill_input: phone_number, gift });
   const done = await mcp.waitDelivered(inv.invoice_id);
   const entry = store.record({
@@ -140,7 +149,7 @@ async function bitrefill(chip, { approved = false, sandbox = false } = {}) {
     return { status: 'pending', invoice_id: inv.invoice_id, message: `Paid. ${product.base_name || product.name} is on its way` };
   }
   const text = gift
-    ? `🎁 Sent you a ₹${inr} ${product.base_name || product.name} gift card. Check your email ${chip.email.replace(/^(.).*(@.*)$/, '$1•••$2')}!`
+    ? emailed()
     : resultText(chip, product, { redemption_info: done.redemption });
   return { status: 'done', invoice_id: inv.invoice_id, activity_id: entry.id, text };
 }
@@ -150,23 +159,27 @@ async function act(chip, mode = 'zodl', sandbox = false) {
     case 'topup':
     case 'gift':
     case 'esim':
+    case 'dth':
       return bitrefill(chip, { sandbox });
 
     case 'zec_send': {
       if (!chip.address) throw new Error(`No Zcash address saved for ${chip.name || 'that contact'}.`);
       const memo = chip.memo || 'Sent with Keyo';
+      const inrPerZec = async () => (await swap.prices()).ZEC * (await swap.usdToInr());
+      if (chip.inr && !chip.amount) chip = { ...chip, amount: Number((chip.inr / (await inrPerZec())).toFixed(5)) };
+      const worth = chip.inr ? ` (₹${chip.inr})` : '';
       // Testnet coins are free, so even the test chat's contacts get a real shielded send.
       const testnet = process.env.AEGIS_NETWORK === 'test';
       if (sandbox && !testnet) {
         const txid = [...Array(64)].map(() => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
         store.record({ type: 'zec', ok: true, sandbox: true, kind: 'send', amount: chip.amount, to: chip.name, txid });
-        return { status: 'done', txid, text: `🛡️ Sent you ${chip.amount} ZEC, shielded.` };
+        return { status: 'done', txid, text: `🛡️ Sent you ${chip.amount} ZEC${worth}, shielded.` };
       }
       if (mode === 'server' || sandbox) {
         const tx = await zec.send(chip.address, chip.amount, memo);
         store.record({ type: 'zec', ok: true, kind: 'send', amount: chip.amount, to: chip.name, txid: tx.txid, network: tx.network });
         const proof = tx.network === 'test' ? `\n${tx.explorer}` : '';
-        return { status: 'done', txid: tx.txid, text: `🛡️ Sent you ${chip.amount} ${tx.network === 'test' ? 'TAZ' : 'ZEC'}, shielded.${proof}` };
+        return { status: 'done', txid: tx.txid, text: `🛡️ Sent you ${chip.amount} ${tx.network === 'test' ? 'TAZ' : 'ZEC'}${worth}, shielded.${proof}` };
       }
       return { status: 'open', open: zcashUri(chip.address, chip.amount, memo), message: `Confirm ${chip.amount} ZEC in Zodl` };
     }
@@ -199,11 +212,18 @@ async function act(chip, mode = 'zodl', sandbox = false) {
         const inrPerZec = (await swap.prices()).ZEC * (await swap.usdToInr());
         chip = { ...chip, amount: Number((chip.inr / inrPerZec).toFixed(5)) };
       }
+      if (chip.usd && !chip.amount) chip = { ...chip, amount: Number((chip.usd / (await swap.prices()).ZEC).toFixed(5)) };
       const mine = (process.env.AEGIS_NETWORK === 'test' ? null : process.env.USER_ZEC_ADDRESS) || (await zec.address().catch(() => ({}))).unified;
       if (!mine) throw new Error('No Zcash address to receive on');
       const uri = zcashUri(mine, chip.amount, chip.memo || 'Keyo request');
-      const why = chip.split ? `Your share of ₹${chip.split.total} is ₹${chip.inr}. ` : '';
+      const why = chip.split ? `Your share of ₹${chip.split.total} is ₹${chip.inr}. ` : chip.usd ? `${chip.memo || 'Invoice'}: $${chip.usd}. ` : '';
       return { status: 'done', text: `${why}Pay me ${chip.amount} ZEC (shielded): ${uri}` };
+    }
+
+    case 'swap_in': {
+      const q = await swap.quote({ from: chip.from, to: 'ZEC', amount: chip.amount, payer: true });
+      store.record({ type: 'swap', ok: true, sandbox: !!sandbox, from: q.from, to: q.to, amountIn: q.amountIn, amountOut: q.amountOut, deposit: q.depositAddress });
+      return { status: 'done', quote: q, text: `Send ${q.amountIn} ${q.from} on Solana to ${q.depositAddress}\nIt reaches me as ${q.amountOut} ZEC through NEAR Intents.` };
     }
 
     case 'swap': {

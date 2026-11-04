@@ -50,14 +50,16 @@ function refundFor(chain) {
   return chain === 'zec' ? process.env.USER_ZEC_REFUND_ADDRESS || process.env.AEGIS_TADDR || addressFor('zec') : addressFor(chain);
 }
 
-export async function quote({ from, to, amount, dry = false }) {
-  dryRun = dry;
+// payer: someone else funds the deposit, so a refund goes back to them; Keyo has no
+// address of theirs and falls back to the stand-in, like a dry quote.
+export async function quote({ from, to, amount, dry = false, payer = false }) {
+  dryRun = dry || payer;
   const a = ASSETS[from.toUpperCase()];
   const b = ASSETS[to.toUpperCase()];
   if (!a || !b) throw new Error(`Can't swap ${from} to ${to}`);
   const base = BigInt(Math.round(Number(amount) * 10 ** Math.min(a.decimals, 12))) * 10n ** BigInt(Math.max(a.decimals - 12, 0));
   const body = {
-    dry,
+    dry: !!dry,
     swapType: 'EXACT_INPUT',
     slippageTolerance: 100,
     originAsset: a.id,
@@ -66,7 +68,7 @@ export async function quote({ from, to, amount, dry = false }) {
     amount: base.toString(),
     refundTo: refundFor(a.chain),
     refundType: 'ORIGIN_CHAIN',
-    recipient: addressFor(b.chain),
+    recipient: payer ? process.env.USER_ZEC_ADDRESS || process.env.AEGIS_UA : addressFor(b.chain),
     recipientType: 'DESTINATION_CHAIN',
     deadline: new Date(Date.now() + 60 * 60_000).toISOString(),
     quoteWaitingTimeMs: 3000,

@@ -1,5 +1,82 @@
 [
-  { "name": "Me", "aliases": ["me", "my"], "phone": "", "operator": "jio", "zec": "" },
-  { "name": "Mom", "aliases": ["mom", "mummy", "maa", "mother"], "phone": "", "operator": "jio", "zec": "" },
-  { "name": "Rahul", "aliases": ["rahul"], "phone": "", "operator": "airtel", "zec": "" }
+  {
+    "aliases": [
+      "me",
+      "my"
+    ],
+    "name": "Me",
+    "operator": "jio",
+    "zec": "",
+    "phone": ""
+  },
+  {
+    "zec": "utest1wqln0qv4cxhpgahx8nuge3mds0r4q4ze62l6qu5k7s2t8rrsvvh6anyys324wpxqzuh73uxpg02xa4hfakw40e7qz0mkvcs3rsx0k60xh0zmrttysltpngd8nh7tx2djhu3jeuf04l2uu3yk5nngp05upkhll8dhs4aj57h05unpjlhn",
+    "demo": true,
+    "phone": "+919800000001",
+    "operator": "jio",
+    "name": "Mom",
+    "aliases": [
+      "mom",
+      "mummy",
+      "maa",
+      "mother"
+    ],
+    "dth": "1023456789",
+    "dthProvider": "tata play"
+  },
+  {
+    "name": "Rahul",
+    "aliases": [
+      "rahul"
+    ],
+    "phone": "+919800000002",
+    "operator": "airtel",
+    "email": "rahul@example.com",
+    "zec": "utest1gldd4akke2d993yddhrut8wpjxuyz88xwavf0m5t57mtcr0tuayu6agrqzvdcagu7lynfw7wze4vypuhwayrxa8v6euh9y0n7c9ekqhcyms9ekqq2xvgwtzkwhr8clkk3az4hcxr2390zsc2u4r0gj78ceaj5uv3aq4e7x0res65kua5",
+    "demo": true
+  },
+  {
+    "name": "Priya",
+    "aliases": [
+      "priya"
+    ],
+    "phone": "+919800000003",
+    "operator": "jio",
+    "email": "priya@example.com",
+    "demo": true
+  },
+  {
+    "name": "Alex",
+    "aliases": [
+      "alex"
+    ],
+    "email": "alex@example.com",
+    "demo": true
+  },
+  {
+    "name": "Neha",
+    "aliases": [
+      "neha"
+    ],
+    "phone": "+919800000004",
+    "operator": "vi",
+    "email": "neha@example.com",
+    "demo": true
+  },
+  {
+    "name": "Karan",
+    "aliases": [
+      "karan"
+    ],
+    "email": "karan@example.com",
+    "demo": true
+  },
+  {
+    "name": "Ananya",
+    "aliases": [
+      "ananya"
+    ],
+    "email": "ananya@example.com",
+    "demo": true
+  }
 ]

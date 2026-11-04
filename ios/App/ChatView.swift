@@ -1,55 +1,210 @@
 import SwiftUI
 
-/// A WhatsApp-style chat with Mom that walks through every Keyo flow. You reply with
-/// the Keyo keyboard; her next message arrives when you send.
+/// WhatsApp-style chats with the people Keyo helps. Each chat walks through its own
+/// errands: they write, you reply with the Keyo keyboard, and their next message arrives.
 struct ChatView: View {
+    @StateObject private var store = ChatStore()
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(store.threads) { t in
+                    // WhatsApp rows have no disclosure chevron.
+                    ChatRow(thread: t, store: store)
+                        .background(NavigationLink(value: t.id) { EmptyView() }.opacity(0))
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+            }
+            .listStyle(.plain)
+            .navigationTitle("Chats")
+            .navigationDestination(for: String.self) { id in
+                if let t = store.threads.first(where: { $0.id == id }) { ThreadView(thread: t, store: store) }
+            }
+        }
+    }
+}
+
+struct ChatThread: Identifiable {
+    struct Line {
+        let from: String
+        let text: String
+    }
+    struct Scene {
+        let opener: Line
+        let thanks: Line
+    }
+
+    let id: String
+    let name: String
+    let avatar: String
+    let tint: Color
+    let members: [String]
+    let scenes: [Scene]
+    var isGroup: Bool { !members.isEmpty }
+
+    static func say(_ from: String, _ text: String) -> Line { Line(from: from, text: text) }
+
+    static let all: [ChatThread] = [
+        ChatThread(id: "mom", name: "Mom", avatar: "M", tint: Color(hex: 0xC9A04A), members: [], scenes: [
+            Scene(opener: say("Mom", "My phone balance is over 😟 I can't call your father"), thanks: say("Mom", "It worked! Thank you ❤️")),
+            Scene(opener: say("Mom", "The TV stopped working, it says recharge Tata Play 📺"), thanks: say("Mom", "Channels are back 😄")),
+            Scene(opener: say("Mom", "Can you recharge my phone every month so I don't have to ask? 🙈"), thanks: say("Mom", "No more asking 😄")),
+        ]),
+        ChatThread(id: "rahul", name: "Rahul", avatar: "R", tint: Color(hex: 0x3A7BD5), members: [], scenes: [
+            Scene(opener: say("Rahul", "Dinner was ₹2,400 for the 3 of us. Send me your share when you can 🙏"), thanks: say("Rahul", "Got it bro, and nobody can see it 🛡️")),
+            Scene(opener: say("Rahul", "Valorant tonight? I'm out of points 😭"), thanks: say("Rahul", "LET'S GO 🔥")),
+            Scene(opener: say("Rahul", "Can you lend me some money till Friday? Like 500"), thanks: say("Rahul", "Lifesaver 🙏 paying you back Friday")),
+        ]),
+        ChatThread(id: "priya", name: "Priya", avatar: "P", tint: Color(hex: 0xD45D8A), members: [], scenes: [
+            Scene(opener: say("Priya", "Just landed in London ✈️ no data and the airport wifi is awful 😩"), thanks: say("Priya", "Installed in one tap, I'm online!! 😮")),
+            Scene(opener: say("Priya", "Btw it's my birthday today 🎂🥳"), thanks: say("Priya", "Aww just got the email 🥹 thank you!!")),
+            Scene(opener: say("Priya", "My laptop charger died and I have a presentation tomorrow 😭"), thanks: say("Priya", "Ordering one now, you're the best")),
+        ]),
+        ChatThread(id: "alex", name: "Alex (Client)", avatar: "A", tint: Color(hex: 0x2E9E7A), members: [], scenes: [
+            Scene(opener: say("Alex", "The logo is perfect! 🙌 Send me your invoice, $150. Happy to pay in ZEC"), thanks: say("Alex", "Paying now 👍")),
+            Scene(opener: say("Alex", "Actually I only hold USDC on Solana. Can I pay the $150 in that?"), thanks: say("Alex", "Sent ✅ pleasure working with you")),
+        ]),
+        ChatThread(id: "goa", name: "Goa Trip 🏖️", avatar: "G", tint: Color(hex: 0xE08A2E), members: ["Neha", "Rahul"], scenes: [
+            Scene(opener: say("Neha", "Villa came to ₹16,000 for the 4 of us. Arpit, how much each?"), thanks: say("Rahul", "Paying mine now 🙌")),
+            Scene(opener: say("Rahul", "What time is sunset in Goa today?"), thanks: say("Neha", "Perfect, beach at 5 then 🌅")),
+        ]),
+        ChatThread(id: "team", name: "Design Team", avatar: "D", tint: Color(hex: 0x7A5AC8), members: ["Karan", "Ananya"], scenes: [
+            Scene(opener: say("Karan", "It's Ananya's last day 🥲 Let's get her something nice, under ₹2000"), thanks: say("Karan", "She's going to love it ❤️")),
+            Scene(opener: say("Karan", "Lunch on the team today? 🍕"), thanks: say("Karan", "Pizza party 🍕🍕")),
+        ]),
+    ]
+}
+
+/// Messages and progress for every chat; lives as long as the tab.
+final class ChatStore: ObservableObject {
     struct Message: Identifiable, Equatable {
         let id = UUID()
-        let mine: Bool
+        let from: String?
         let text: String
         let time = Date()
+        var mine: Bool { from == nil }
     }
 
-    struct Scene: Identifiable {
-        let id: String
-        let icon: String
-        let opener: String
-        let hint: String
-        let thanks: String
+    let threads = ChatThread.all
+    @Published var messages: [String: [Message]] = [:]
+    @Published var scene: [String: Int] = [:]
+    @Published var unread: [String: Int] = [:]
+    @Published var typing: [String: String] = [:]
+
+    init() {
+        // Each chat opens with its first message already waiting.
+        for t in threads {
+            messages[t.id] = [Message(from: t.scenes[0].opener.from, text: t.scenes[0].opener.text)]
+            scene[t.id] = 0
+            unread[t.id] = 1
+        }
     }
 
-    static let scenes: [Scene] = [
-        Scene(id: "Recharge", icon: "iphone.gen3", opener: "My phone balance is over 😟 I can't call your father",
-              hint: "recharge mom's jio for 199", thanks: "It worked! Thank you ❤️"),
-        Scene(id: "Birthday", icon: "gift", opener: "It's Priya's birthday today! Did you wish her? 🎂",
-              hint: "happy birthday priya!", thanks: "So sweet of you 🥰"),
-        Scene(id: "Send ZEC", icon: "shield.lefthalf.filled", opener: "Can you send me 0.01 ZEC for groceries?",
-              hint: "send 0.01 zec to mom", thanks: "Got it, all private 🛡️"),
-        Scene(id: "Split", icon: "arrow.down.left", opener: "Thank you for dinner! What do I owe you?",
-              hint: "request 0.05 zec for dinner", thanks: "Paid! 🙏"),
-        Scene(id: "eSIM", icon: "simcard", opener: "I'm landing in Dubai tomorrow ✈️ How will I get internet?",
-              hint: "landing in dubai tomorrow", thanks: "Installed in one tap 😮"),
-        Scene(id: "Swap", icon: "arrow.triangle.2.circlepath", opener: "How do I turn my ZEC into dollars?",
-              hint: "swap 0.01 zec to usdc", thanks: "Done, so easy"),
-        Scene(id: "Dinner", icon: "fork.knife", opener: "Too tired to cook tonight 😴",
-              hint: "order some food", thanks: "Ordering biryani 😋"),
-        Scene(id: "Approve", icon: "faceid", opener: "Can you get me a ₹2000 Flipkart card for Diwali shopping?",
-              hint: "send mom a 2000 flipkart gift card", thanks: "You're the best 🪔"),
-        Scene(id: "Ideas", icon: "sparkles", opener: "Papa's anniversary gift ideas? Something under ₹1000 🎁",
-              hint: "gift for dad under 1000", thanks: "Perfect, he'll love it"),
-        Scene(id: "Monthly", icon: "calendar.badge.clock", opener: "Can you recharge my phone every month so I don't have to ask? 🙈",
-              hint: "every month recharge mom's jio for 199", thanks: "No more asking 😄"),
-        Scene(id: "Price", icon: "chart.line.uptrend.xyaxis", opener: "How much is one ZEC worth now?",
-              hint: "zec price", thanks: "Wow, that much!"),
-        Scene(id: "Ask", icon: "sparkles", opener: "What time is it in Dubai right now?",
-              hint: "what time is it in dubai?", thanks: "Thanks, I'll call Aunty then"),
-    ]
+    func last(_ t: ChatThread) -> Message? { messages[t.id]?.last }
 
-    @State private var messages: [Message] = []
+    /// Shares the chat's latest incoming message with the keyboard, like a reply suggestion.
+    func share(_ t: ChatThread) {
+        if let m = messages[t.id]?.last(where: { !$0.mine }), let from = m.from { Keyo.incoming = (m.text, from) }
+        unread[t.id] = 0
+    }
+
+    func send(_ text: String, in t: ChatThread) {
+        messages[t.id, default: []].append(Message(from: nil, text: text))
+        let i = scene[t.id] ?? 0
+        guard i < t.scenes.count else { return }
+        say(t.scenes[i].thanks, in: t, after: 1.0)
+        let next = (i + 1) % t.scenes.count
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
+            self.scene[t.id] = next
+            self.say(t.scenes[next].opener, in: t, after: 0.4)
+        }
+    }
+
+    func restart(_ t: ChatThread) {
+        messages[t.id] = []
+        scene[t.id] = 0
+        say(t.scenes[0].opener, in: t, after: 0.3)
+    }
+
+    private func say(_ line: ChatThread.Line, in t: ChatThread, after delay: Double) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            self.typing[t.id] = line.from
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+                self.typing[t.id] = nil
+                self.messages[t.id, default: []].append(Message(from: line.from, text: line.text))
+                Keyo.incoming = (line.text, line.from)
+            }
+        }
+    }
+}
+
+struct Avatar: View {
+    let thread: ChatThread
+    var size: CGFloat = 52
+
+    var body: some View {
+        ZStack {
+            Circle().fill(LinearGradient(colors: [thread.tint.opacity(0.75), thread.tint], startPoint: .top, endPoint: .bottom))
+            if thread.isGroup {
+                Image(systemName: "person.2.fill").font(.system(size: size * 0.38)).foregroundStyle(.white)
+            } else {
+                Text(thread.avatar).font(Roman.caps(size * 0.42, .bold)).foregroundStyle(.white)
+            }
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+struct ChatRow: View {
+    let thread: ChatThread
+    @ObservedObject var store: ChatStore
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Avatar(thread: thread)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack {
+                    Text(thread.name).font(.system(size: 17, weight: .semibold)).foregroundStyle(WA.ink).lineLimit(1)
+                    Spacer()
+                    if let m = store.last(thread) {
+                        Text(m.time.formatted(date: .omitted, time: .shortened)).font(.system(size: 13))
+                            .foregroundStyle((store.unread[thread.id] ?? 0) > 0 ? WA.green : WA.faded)
+                    }
+                }
+                HStack(spacing: 4) {
+                    if let who = store.typing[thread.id] {
+                        Text(thread.isGroup ? "\(who) is typing…" : "typing…").foregroundStyle(WA.green)
+                    } else if let m = store.last(thread) {
+                        if m.mine { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(Color(hex: 0x53BDEB)) }
+                        Text(preview(m)).foregroundStyle(WA.faded)
+                    }
+                    Spacer()
+                    if let n = store.unread[thread.id], n > 0 {
+                        Text("\(n)").font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                            .frame(minWidth: 20, minHeight: 20).background(Circle().fill(WA.green))
+                    }
+                }
+                .font(.system(size: 15))
+                .lineLimit(2)
+            }
+        }
+    }
+
+    private func preview(_ m: ChatStore.Message) -> String {
+        let text = m.text.replacingOccurrences(of: "\n", with: " ")
+        if thread.isGroup, let from = m.from { return "\(from): \(text)" }
+        return text
+    }
+}
+
+struct ThreadView: View {
+    let thread: ChatThread
+    @ObservedObject var store: ChatStore
+    @Environment(\.dismiss) private var dismiss
     @State private var draft = ""
-    @State private var scene = 0
-    @State private var typing = false
     @FocusState private var focused: Bool
+
+    private var messages: [ChatStore.Message] { store.messages[thread.id] ?? [] }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -60,7 +215,7 @@ struct ChatView: View {
                     ScrollView {
                         LazyVStack(spacing: 6) {
                             ForEach(messages) { m in bubble(m).id(m.id) }
-                            if typing { typingBubble.id("typing") }
+                            if store.typing[thread.id] != nil { typingBubble.id("typing") }
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 12)
@@ -73,30 +228,31 @@ struct ChatView: View {
                     .onChange(of: focused) { _, _ in
                         withAnimation { proxy.scrollTo(messages.last?.id, anchor: .bottom) }
                     }
+                    .onAppear { proxy.scrollTo(messages.last?.id, anchor: .bottom) }
                 }
             }
             composer
         }
         .background(WA.wallpaper)
-        .onAppear {
-            if messages.isEmpty { start(0) }
-        }
-        .onLongPressGesture(minimumDuration: 1.2) { restart() }
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .onAppear { store.share(thread) }
+        .onChange(of: messages) { _, _ in store.unread[thread.id] = 0 }
+        .onLongPressGesture(minimumDuration: 1.2) { store.restart(thread) }
     }
 
     // MARK: Pieces
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image(systemName: "chevron.left").font(.system(size: 20, weight: .semibold)).foregroundStyle(WA.icon)
-            ZStack {
-                Circle().fill(LinearGradient(colors: [Color(hex: 0xE9CC82), Color(hex: 0xB0852F)], startPoint: .top, endPoint: .bottom))
-                Text("M").font(Roman.caps(18, .bold)).foregroundStyle(Color(hex: 0x4A3410))
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left").font(.system(size: 20, weight: .semibold)).foregroundStyle(WA.icon)
             }
-            .frame(width: 38, height: 38)
+            .buttonStyle(.plain)
+            Avatar(thread: thread, size: 38)
             VStack(alignment: .leading, spacing: 1) {
-                Text("Mom").font(.system(size: 17, weight: .semibold)).foregroundStyle(WA.ink)
-                Text(typing ? "typing…" : "online").font(.system(size: 12.5)).foregroundStyle(WA.faded)
+                Text(thread.name).font(.system(size: 17, weight: .semibold)).foregroundStyle(WA.ink).lineLimit(1)
+                Text(status).font(.system(size: 12.5)).foregroundStyle(WA.faded).lineLimit(1)
             }
             Spacer()
             Image(systemName: "video").font(.system(size: 19)).foregroundStyle(WA.icon)
@@ -105,6 +261,11 @@ struct ChatView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(WA.bar)
+    }
+
+    private var status: String {
+        if let who = store.typing[thread.id] { return thread.isGroup ? "\(who) is typing…" : "typing…" }
+        return thread.isGroup ? (thread.members + ["You"]).joined(separator: ", ") : "online"
     }
 
     private var wallpaper: some View {
@@ -118,10 +279,13 @@ struct ChatView: View {
         .onTapGesture { focused = false }
     }
 
-    private func bubble(_ m: Message) -> some View {
+    private func bubble(_ m: ChatStore.Message) -> some View {
         HStack {
             if m.mine { Spacer(minLength: 48) }
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .leading, spacing: 2) {
+                if thread.isGroup, let from = m.from {
+                    Text(from).font(.system(size: 13, weight: .semibold)).foregroundStyle(senderColor(from))
+                }
                 Text(.init(linkified(m.text)))
                     .font(.system(size: 16))
                     .foregroundStyle(WA.ink)
@@ -129,6 +293,7 @@ struct ChatView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 3) {
+                    Spacer(minLength: 0)
                     Text(m.time.formatted(date: .omitted, time: .shortened)).font(.system(size: 11)).foregroundStyle(WA.faded)
                     if m.mine { Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundStyle(Color(hex: 0x53BDEB)) }
                 }
@@ -140,6 +305,12 @@ struct ChatView: View {
             .fixedSize(horizontal: false, vertical: true)
             if !m.mine { Spacer(minLength: 48) }
         }
+    }
+
+    private func senderColor(_ name: String) -> Color {
+        let palette: [UInt32] = [0xD45D8A, 0x3A7BD5, 0x2E9E7A, 0xE08A2E, 0x7A5AC8]
+        let i = name.unicodeScalars.reduce(0) { $0 + Int($1.value) } % palette.count
+        return Color(hex: palette[i])
     }
 
     private var typingBubble: some View {
@@ -154,69 +325,33 @@ struct ChatView: View {
     }
 
     private var composer: some View {
-        VStack(spacing: 6) {
-            HStack(alignment: .bottom, spacing: 8) {
-                Image(systemName: "plus").font(.system(size: 20)).foregroundStyle(WA.icon).padding(.bottom, 9)
-                TextField("Message", text: $draft, axis: .vertical)
-                    .lineLimit(1...6)
-                    .focused($focused)
-                    .padding(.horizontal, 14).padding(.vertical, 9)
-                    .background(RoundedRectangle(cornerRadius: 20).fill(WA.field))
-                    .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(WA.divider, lineWidth: 0.5))
-                Button(action: send) {
-                    Image(systemName: draft.isEmpty ? "mic.fill" : "paperplane.fill")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Circle().fill(WA.green))
-                }
-                .buttonStyle(.plain)
+        HStack(alignment: .bottom, spacing: 8) {
+            Image(systemName: "plus").font(.system(size: 20)).foregroundStyle(WA.icon).padding(.bottom, 9)
+            TextField("Message", text: $draft, axis: .vertical)
+                .lineLimit(1...6)
+                .focused($focused)
+                .padding(.horizontal, 14).padding(.vertical, 9)
+                .background(RoundedRectangle(cornerRadius: 20).fill(WA.field))
+                .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(WA.divider, lineWidth: 0.5))
+            Button(action: send) {
+                Image(systemName: draft.isEmpty ? "mic.fill" : "paperplane.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(WA.green))
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(WA.bar)
     }
 
-    // MARK: Flow
-
-    private func restart() {
-        messages = []
-        start(0)
-    }
-
-    private func start(_ i: Int) {
-        scene = i
-        draft = ""
-        momSays(Self.scenes[i].opener, delay: 0.5)
-    }
-
     private func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        messages.append(Message(mine: true, text: text))
         draft = ""
-        // A message carrying a Keyo result finishes the scene; Mom answers and the next one starts.
-        guard scene < Self.scenes.count else { return }
-        let finished = scene
-        momSays(Self.scenes[finished].thanks, delay: 1.0)
-        let next = (finished + 1) % Self.scenes.count
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
-            scene = next
-            momSays(Self.scenes[next].opener, delay: 0.4)
-        }
-    }
-
-    private func momSays(_ text: String, delay: Double) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-            typing = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-                typing = false
-                messages.append(Message(mine: false, text: text))
-                // The chat shares Mom's latest message with Keyo, like a reply suggestion.
-                Keyo.incoming = (text, "Mom")
-            }
-        }
+        store.send(text, in: thread)
     }
 
     private func linkified(_ s: String) -> String {

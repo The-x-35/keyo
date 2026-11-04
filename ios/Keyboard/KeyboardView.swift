@@ -218,6 +218,8 @@ struct ChipView: View {
         case "price": return "chart.line.uptrend.xyaxis"
         case "answer": return "sparkles"
         case "schedule": return "calendar.badge.clock"
+        case "dth": return "tv.fill"
+        case "swap_in": return "arrow.down.circle.fill"
         default: return "shield.lefthalf.filled"
         }
     }

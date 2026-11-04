@@ -24,12 +24,26 @@ final class KeyboardViewController: UIInputViewController {
         self.host = host
     }
 
+    private var watch: Timer?
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         model.resetContext()
         if hasFullAccess { Keyo.keyboardSeen = Date() }
         model.flushPendingInsert()
         model.contextChanged()
+        // A new message can arrive while the keyboard is up with an empty box; check for it.
+        watch?.invalidate()
+        watch = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self, (self.textDocumentProxy.documentContextBeforeInput ?? "").isEmpty else { return }
+            self.model.contextChanged()
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        watch?.invalidate()
+        watch = nil
     }
 
     override func textDidChange(_ textInput: UITextInput?) {
@@ -194,7 +208,7 @@ final class KeyboardModel: ObservableObject {
                 status = nil
                 // One clear action for a fresh message: Autopilot runs it, you just hit send.
                 if Keyo.autopilot, found.count == 1, let chip = found.first,
-                   ["topup", "zec_send", "zec_request", "esim", "gift", "swap"].contains(chip.kind),
+                   ["topup", "dth", "zec_send", "zec_request", "esim", "gift", "swap", "swap_in"].contains(chip.kind),
                    lastAutopilot != incoming.text {
                     lastAutopilot = incoming.text
                     try? await Task.sleep(nanoseconds: 700_000_000)
@@ -243,7 +257,9 @@ final class KeyboardModel: ObservableObject {
         case "gift", "esim": return "Buying through Bitrefill…"
         case "swap": return "Getting a swap quote…"
         case "zec_send": return Keyo.walletMode == "server" || Keyo.sandbox ? "Sending shielded ZEC…" : "Opening Zodl…"
-        case "zec_request": return "Making a shielded link…"
+        case "zec_request": return chip.raw["usd"] != nil ? "Writing a shielded invoice…" : "Making a shielded link…"
+        case "dth": return "Recharging the TV…"
+        case "swap_in": return "Getting a NEAR Intents address…"
         case "schedule": return "Setting a standing order…"
         case "answer": return "Thinking…"
         default: return "Working…"
