@@ -1,6 +1,8 @@
 // Turns what the user is typing into action chips for the keyboard strip.
 // Fast regex rules first; Gemini only for free-form text the rules miss.
 import { contacts } from './store.mjs';
+import * as schedule from './schedule.mjs';
+import * as shop from './shop.mjs';
 
 const OPERATORS = ['jio', 'airtel', 'vi', 'bsnl'];
 const BRANDS = ['swiggy', 'zomato', 'amazon', 'flipkart', 'blinkit', 'bigbasket', 'myntra', 'uber', 'bookmyshow', 'hotstar', 'makemytrip', 'apollo', 'phonepe', 'jiomart'];
@@ -167,12 +169,14 @@ function label(c) {
       return { title: c.unit === 'INR' ? `₹${c.amount} in ZEC` : `${c.amount} ZEC in ₹ and $`, subtitle: 'Live price' };
     case 'answer':
       return { title: 'Ask Keyo', subtitle: c.question.slice(0, 32) };
+    case 'schedule':
+      return { title: `Every ${c.every} · ${label(c.chip).title}`, subtitle: 'Standing order · runs by itself' };
     case 'swap':
       return { title: `Swap ${c.amount} ${c.from} → ${c.to}`, subtitle: 'NEAR Intents' };
     case 'topup':
       return { title: `Recharge ${(c.name || '').toLowerCase() === 'me' ? 'my' : cap(c.name) + "'s"} ${cap(c.operator || 'phone')} ₹${c.amount}`, subtitle: c.phone ? c.phone.replace(/^(\+\d{2})(\d{2})\d+(\d{3})$/, '$1 $2•••••$3') : 'No number saved' };
     case 'gift':
-      return { title: `${c.name ? 'Send ' + cap(c.name) + ' ' : ''}₹${c.amount} ${cap(c.brand)} card`, subtitle: c.occasion ? `Gift for the ${c.occasion}` : 'Gift card · Bitrefill' };
+      return { title: `${c.name ? 'Send ' + cap(c.name) + ' ' : ''}₹${c.amount} ${cap(c.brand)} card`, subtitle: c.why ? cap(c.why) : c.occasion ? `Gift for the ${c.occasion}` : 'Gift card · Bitrefill' };
     case 'esim':
       return { title: `eSIM for ${cap(c.country)}`, subtitle: 'Data on landing' };
     default:
@@ -200,8 +204,27 @@ function replyCommand(incoming, from) {
   return null;
 }
 
+const SHOP = /\b(gift|present|something|ideas?|what (?:should|can) i (?:get|buy|gift))\b.*\b(for|under|below|within)\b|\b(movie night|date night|housewarming|anniversary gift|diwali gift|wedding gift)\b/;
+
 export async function suggest(text, { incoming, from } = {}) {
+  // "every month recharge mom's jio for 199" → a standing order around the inner action.
+  const order = text.trim() ? schedule.parse(text) : null;
+  if (order) {
+    const inner = rules(order.command)[0];
+    if (inner) {
+      const chip = { kind: 'schedule', every: order.every, chip: { ...inner, ...label(inner) } };
+      return [{ id: `${Date.now()}-0`, ...label(chip), ...chip }];
+    }
+  }
   let chips = rules(text);
+  // Open-ended shopping goes to the shopper, which chooses from Bitrefill's real catalog.
+  const ask = text.trim() || incoming || '';
+  if ((!chips.length || chips.every((c) => c.kind === 'answer')) && SHOP.test(ask.toLowerCase())) {
+    const budget = num(ask.match(/(?:under|below|within|upto|up to)\s*(?:₹|rs\.?\s?)?(\d[\d,]*)/i)?.[1] || 0) || undefined;
+    const who = ask.match(/\bfor (?:my |your )?(mom|dad|bro|sis|wife|husband|[A-Z][a-z]+)\b/)?.[1];
+    const found = await shop.picks(ask, { budget });
+    if (found.length) chips = found.map((c) => ({ ...c, name: who && findContact(who) ? findContact(who).name : null }));
+  }
   // Nothing typed yet: offer the reply the incoming message asks for.
   if (!chips.length && !text.trim() && incoming) {
     const cmd = replyCommand(incoming, from);

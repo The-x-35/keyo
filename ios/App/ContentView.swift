@@ -372,6 +372,7 @@ struct PersonEditor: View {
 
 struct LedgerView: View {
     @State private var items: [[String: Any]] = []
+    @State private var orders: [[String: Any]] = []
     @State private var spent = 0
     @State private var perDay = 0
     @State private var perPurchase = 0
@@ -395,6 +396,13 @@ struct LedgerView: View {
                 ProgressView(value: Double(min(spent, max(perDay, 1))), total: Double(max(perDay, 1)))
                     .tint(Roman.gold)
             }
+            if !orders.isEmpty {
+                Eyebrow(text: "Standing orders")
+                VStack(spacing: 8) {
+                    ForEach(orders.indices, id: \.self) { i in order(orders[i]) }
+                }
+            }
+            if !items.isEmpty { Eyebrow(text: "History") }
             VStack(spacing: 0) {
                 ForEach(items.indices, id: \.self) { i in
                     entry(items[i])
@@ -407,6 +415,29 @@ struct LedgerView: View {
         }
         .task { await load() }
         .refreshable { await load() }
+    }
+
+    private func order(_ r: [String: Any]) -> some View {
+        let chip = r["chip"] as? [String: Any] ?? [:]
+        let id = r["id"] as? String ?? ""
+        let next = (r["next"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) }
+        return HStack(spacing: 12) {
+            Image(systemName: "calendar.badge.clock").foregroundStyle(Roman.gold).frame(width: 22)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(chip["title"] as? String ?? "").font(.subheadline.weight(.semibold)).foregroundStyle(Roman.ink)
+                Text("Every \(r["every"] as? String ?? "") · next \(next?.formatted(date: .abbreviated, time: .omitted) ?? "")")
+                    .font(.caption).foregroundStyle(Roman.faded)
+            }
+            Spacer()
+            Menu {
+                Button("Run now") { Task { _ = try? await API.request("POST", "/rules/run", body: ["id": id]); try? await Task.sleep(nanoseconds: 35_000_000_000); await load() } }
+                Button("Stop", role: .destructive) { Task { _ = try? await API.request("POST", "/rules/delete", body: ["id": id]); await load() } }
+            } label: {
+                Image(systemName: "ellipsis.circle").font(.system(size: 20)).foregroundStyle(Roman.gold)
+            }
+        }
+        .padding(12)
+        .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func entry(_ a: [String: Any]) -> some View {
@@ -432,6 +463,7 @@ struct LedgerView: View {
             return (icon, "\(a["product"] as? String ?? "") ₹\(a["inr"] ?? "")\(to)")
         case "zec": return ("shield.lefthalf.filled", "\(a["amount"] ?? "") ZEC sent\(to)")
         case "swap": return ("arrow.triangle.2.circlepath", "\(a["amountIn"] ?? "") \(a["from"] ?? "") → \(a["amountOut"] ?? "") \(a["to"] ?? "")")
+        case "auto": return ("calendar.badge.clock", "On its own · \(a["title"] as? String ?? "")")
         default: return ("circle", a["type"] as? String ?? "")
         }
     }
@@ -443,6 +475,7 @@ struct LedgerView: View {
 
     private func load() async {
         do {
+            orders = (try? await API.request("GET", "/rules"))?["rules"] as? [[String: Any]] ?? []
             let j = try await API.request("GET", "/activity")
             items = j["activity"] as? [[String: Any]] ?? []
             spent = j["spentToday"] as? Int ?? 0

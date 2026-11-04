@@ -13,7 +13,7 @@ function load() {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
     const seed = JSON.parse(fs.readFileSync(path.join(root, 'contacts.example.json'), 'utf8'));
-    return { contacts: seed, activity: [], approvals: {} };
+    return { contacts: seed, activity: [], approvals: {}, rules: [] };
   }
 }
 let state = load();
@@ -49,5 +49,18 @@ export function addApproval(id, req) {
 export const approval = (id) => state.approvals[id];
 export function settleApproval(id, status) {
   if (state.approvals[id]) state.approvals[id].status = status;
+  save();
+}
+
+export const rules = () => (state.rules ||= []);
+export function saveRule(rule) {
+  const list = rules();
+  const i = list.findIndex((r) => r.id === rule.id);
+  if (i >= 0) list[i] = rule;
+  else list.unshift(rule);
+  save();
+}
+export function deleteRule(id) {
+  state.rules = rules().filter((r) => r.id !== id);
   save();
 }

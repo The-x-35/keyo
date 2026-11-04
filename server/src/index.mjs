@@ -11,6 +11,7 @@ import * as swap from './swap.mjs';
 import * as zec from './zec.mjs';
 import { suggest, zcashUri } from './intent.mjs';
 import * as store from './store.mjs';
+import * as schedule from './schedule.mjs';
 
 // Tiny .env loader so the server runs with plain `node`.
 const envFile = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), '.env');
@@ -52,6 +53,10 @@ async function resolve(chip) {
     return { product, pkg: br.pickPackage(product, chip.amount), phone_number: chip.phone };
   }
   if (chip.kind === 'gift') {
+    if (chip.product_id) {
+      const product = await br.product(chip.product_id);
+      return { product, pkg: br.pickPackage(product, chip.amount) };
+    }
     const found = await br.findProduct(chip.brand);
     const product = await br.product(found.id);
     return { product, pkg: br.pickPackage(product, chip.amount) };
@@ -177,6 +182,15 @@ async function act(chip, mode = 'zodl', sandbox = false) {
     case 'answer':
       return { status: 'done', text: await answer(chip.question) };
 
+    case 'schedule': {
+      // First run now, then on its own every period.
+      const first = await act(chip.chip, mode, sandbox);
+      const rule = schedule.add(chip.every, chip.chip);
+      const when = new Date(rule.next).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      const lines = [first.text, `🗓️ I'll do this every ${chip.every} by myself. Next: ${when}.`].filter(Boolean);
+      return { ...first, status: first.status === 'done' ? 'done' : first.status, rule_id: rule.id, text: lines.join('\n') };
+    }
+
     case 'zec_request': {
       if (chip.inr && !chip.amount) {
         const inrPerZec = (await swap.prices()).ZEC * (await swap.usdToInr());
@@ -259,6 +273,18 @@ const routes = {
   },
   'GET /activity': async () => ({ activity: store.activity(), spentToday: store.spentToday(), caps: { perPurchase: CAP_PER_PURCHASE, perDay: CAP_PER_DAY } }),
   'GET /contacts': async () => ({ contacts: store.contacts() }),
+  'GET /rules': async () => ({ rules: store.rules() }),
+  'POST /rules/run': async (b) => {
+    const r = store.rules().find((x) => x.id === b.id);
+    if (!r) throw new Error('No such order');
+    r.next = Date.now() - 1;
+    store.saveRule(r);
+    return { ok: true };
+  },
+  'POST /rules/delete': async (b) => {
+    store.deleteRule(b.id);
+    return { ok: true };
+  },
   'POST /contacts': async (b) => {
     store.setContacts(b.contacts || []);
     return { ok: true };
@@ -299,4 +325,7 @@ http
       send(res, 400, { error: e.message });
     }
   })
-  .listen(PORT, () => console.log(`Keyo server on :${PORT}`));
+  .listen(PORT, () => {
+    console.log(`Keyo server on :${PORT}`);
+    schedule.start(act);
+  });

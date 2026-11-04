@@ -244,6 +244,8 @@ final class KeyboardModel: ObservableObject {
         case "swap": return "Getting a swap quote…"
         case "zec_send": return Keyo.walletMode == "server" || Keyo.sandbox ? "Sending shielded ZEC…" : "Opening Zodl…"
         case "zec_request": return "Making a shielded link…"
+        case "schedule": return "Setting a standing order…"
+        case "answer": return "Thinking…"
         default: return "Working…"
         }
     }

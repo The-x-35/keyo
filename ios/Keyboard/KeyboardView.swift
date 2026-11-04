@@ -217,6 +217,7 @@ struct ChipView: View {
         case "zec_request": return "arrow.down.left"
         case "price": return "chart.line.uptrend.xyaxis"
         case "answer": return "sparkles"
+        case "schedule": return "calendar.badge.clock"
         default: return "shield.lefthalf.filled"
         }
     }
