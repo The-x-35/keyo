@@ -25,7 +25,7 @@ if (fs.existsSync(envFile)) {
 
 const PORT = Number(process.env.PORT || 8787);
 const CAP_PER_PURCHASE = Number(process.env.CAP_PER_PURCHASE_USD || 3);
-const CAP_PER_DAY = Number(process.env.CAP_PER_DAY_USD || 10);
+const CAP_PER_DAY = Number(process.env.CAP_PER_DAY_USD || 20);
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const money = (n) => `$${Number(n).toFixed(2).replace(/\.00$/, '')}`;

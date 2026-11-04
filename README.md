@@ -36,7 +36,7 @@ Messages no rule knows go to Gemini, which picks the errand. The app's **Chat** 
 Bitrefill's loop is trigger → guarantee → fulfillment → ending. Keyo covers all four without a checkout:
 
 - **Trigger:** the other person's message (proactive chips), your own words, or a schedule (standing orders run on the server every minute/day/week/month).
-- **Guarantee:** $3 per purchase and $10 per day. Above that, Face ID in the app. Autopilot only acts on a single, clear action under the limit. Every run is logged in the Ledger with its invoice ID.
+- **Guarantee:** $3 per purchase and $20 per day. Above that, Face ID in the app. Autopilot only acts on a single, clear action under the limit. Every run is logged in the Ledger with its invoice ID.
 - **Fulfillment:** Bitrefill's eCommerce MCP (`buy-products`, `get-invoice-by-id`, `get-balances`) paying from the account balance, plus REST v2 for the catalog (`/products`, `/products/{id}`, `/check_phone_number`, `/products/esims`).
 - **Ending:** recharges land on the phone; cards, PINs and eSIM install links are typed into the chat or emailed straight to the recipient (`gift` in `buy-products`). No copy and paste.
 
@@ -49,7 +49,7 @@ Bitrefill's loop is trigger → guarantee → fulfillment → ending. Keyo cover
 
 ## Guardrails
 
-- Most an agent can spend: **$3 a purchase, $10 a day** (`CAP_PER_PURCHASE_USD`, `CAP_PER_DAY_USD`).
+- Most an agent can spend: **$3 a purchase, $20 a day** (`CAP_PER_PURCHASE_USD`, `CAP_PER_DAY_USD`).
 - Above that, the phone owner approves with Face ID in Keyo; nothing is bought until then.
 - Standing orders use the same limits.
 - Contacts without a real number (the test chat's Mom) are never charged: their flows use Bitrefill's real catalog and prices but skip payment.
