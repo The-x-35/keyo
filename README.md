@@ -6,20 +6,24 @@ Built at Free Society Hack, Mumbai, 4 Nov 2026, for **Agentic Commerce (Bitrefil
 
 ## What it does
 
-| In the chat | Keyo | Human steps |
-|---|---|---|
-| Mom: "My phone balance is over 😟" | **Autopilot** recharges Mom's Jio ₹199 through Bitrefill and types the confirmation | press send |
-| Mom: "Can you recharge my phone every month so I don't have to ask?" | Sets a **standing order** that runs by itself every month, inside your limits | press send, then none |
-| Mom: "Papa's anniversary gift ideas? Under ₹1000" | The **shopper** picks 3 real cards from Bitrefill's India catalog (The Man Company, Fastrack, Zomato…) | tap one |
-| "happy birthday priya!" | Offers Flipkart / Zomato cards; one tap buys and types the card under your wish, or emails it to her if she's in your contacts | tap |
-| Mom: "I'm landing in Dubai tomorrow ✈️" | Buys a Bitrefill UAE eSIM and types Apple's one-tap install link | press send |
-| Mom: "Can you send me 0.01 ZEC for groceries?" | Shielded ZEC from **Aegis** (Keyo's server wallet) or a ZIP 321 link that opens **Zodl** | press send (Aegis) |
-| Mom: "What do I owe you?" / "dinner was ₹1200 split between 4" | A shielded `zcash:` request for her share, priced live | press send |
-| Mom: "How do I turn my ZEC into dollars?" | Swaps through **NEAR Intents** 1Click | press send |
-| Mom: "Get me a ₹2000 Flipkart card" | Over your ₹500 limit: waits for **Face ID** in Keyo, then types the card in | Face ID |
-| "zec price", "₹500 in zec", any question | Live price, conversion, or an instant answer | tap |
+| Chat | They say | Keyo | Human steps |
+|---|---|---|---|
+| Mom | "My phone balance is over 😟" | **Autopilot** recharges her Jio ₹199 through Bitrefill and types the confirmation | press send |
+| Mom | "The TV stopped working, it says recharge Tata Play" | Autopilot recharges her Tata Play (DTH) ₹350 | press send |
+| Mom | "Can you recharge my phone every month?" | A **standing order** that runs by itself every month, inside your limits | tap, then none |
+| Rahul | "Dinner was ₹2,400 for the 3 of us. Send me your share" | Sends ₹800 worth of **shielded ZEC** from Aegis at the live price, with the explorer link | press send |
+| Rahul | "Valorant tonight? I'm out of points" | Buys a Valorant card and Bitrefill emails it to him | press send |
+| Rahul | "Can you lend me some money till Friday? Like 500" | No rule covers it: **Gemini reads the message** and picks ₹500 in shielded ZEC | press send |
+| Priya | "Just landed in London, no data" | Buys a UK eSIM and types Apple's one-tap install link | press send |
+| Priya | "It's my birthday today 🎂" | The **shopper** picks 3 cards from Bitrefill's India catalog; one tap emails it to her | tap |
+| Alex (client) | "Send me your invoice, $150. Happy to pay in ZEC" | A shielded `zcash:` invoice priced live | press send |
+| Alex (client) | "I only hold USDC on Solana" | A NEAR Intents deposit address: his USDC lands as your ZEC | press send |
+| Goa Trip (group) | "Villa came to ₹16,000 for the 4 of us, how much each?" | A shielded ZEC request for ₹4,000 each | press send |
+| Design Team (group) | "Ananya's last day, something under ₹2000" | Shopper picks; over the ₹500 limit, so **Face ID** first, then the card is typed in | tap, Face ID |
+| Design Team (group) | "Lunch on the team today? 🍕" | Autopilot buys a Domino's card | press send |
+| anywhere | "zec price", "₹500 in zec", any question | Live price, conversion, or an instant answer | tap |
 
-The test chat with Mom lives in the app's **Chat** tab, a WhatsApp look-alike. It shares Mom's latest message with the keyboard the way a messaging integration would.
+The app's **Chat** tab is a WhatsApp look-alike with these six chats. Each chat shares its latest message with the keyboard the way a messaging integration would; Bitrefill purchases for these test contacts use the real catalog and prices but skip payment.
 
 ## Agentic, not chat
 
