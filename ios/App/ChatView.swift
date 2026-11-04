@@ -35,6 +35,14 @@ struct ChatView: View {
               hint: "order some food", thanks: "Ordering biryani 😋"),
         Scene(id: "Approve", icon: "faceid", opener: "Can you get me a ₹2000 Flipkart card for Diwali shopping?",
               hint: "send mom a 2000 flipkart gift card", thanks: "You're the best 🪔"),
+        Scene(id: "Ideas", icon: "sparkles", opener: "Papa's anniversary gift ideas? Something under ₹1000 🎁",
+              hint: "gift for dad under 1000", thanks: "Perfect, he'll love it"),
+        Scene(id: "Monthly", icon: "calendar.badge.clock", opener: "Can you recharge my phone every month so I don't have to ask? 🙈",
+              hint: "every month recharge mom's jio for 199", thanks: "No more asking 😄"),
+        Scene(id: "Price", icon: "chart.line.uptrend.xyaxis", opener: "How much is one ZEC worth now?",
+              hint: "zec price", thanks: "Wow, that much!"),
+        Scene(id: "Ask", icon: "sparkles", opener: "What time is it in Dubai right now?",
+              hint: "what time is it in dubai?", thanks: "Thanks, I'll call Aunty then"),
     ]
 
     @State private var messages: [Message] = []
@@ -189,8 +197,7 @@ struct ChatView: View {
         messages.append(Message(mine: true, text: text))
         draft = ""
         // A message carrying a Keyo result finishes the scene; Mom answers and the next one starts.
-        let done = ["✅", "🎁", "🛡️", "📶", "🔁", "Pay me", "zcash:"].contains { text.contains($0) }
-        guard done, scene < Self.scenes.count else { return }
+        guard scene < Self.scenes.count else { return }
         let finished = scene
         momSays(Self.scenes[finished].thanks, delay: 1.0)
         let next = (finished + 1) % Self.scenes.count

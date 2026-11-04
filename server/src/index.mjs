@@ -232,7 +232,7 @@ async function answer(question) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: `Reply with only the answer, one or two short sentences the user can send as a chat message. No preamble, no follow-up remarks.\n\n${question}` }] }],
+      contents: [{ role: 'user', parts: [{ text: `Now: ${new Date().toISOString()} (UTC). The user is in India.\nReply with only the answer, one or two short sentences the user can send as a chat message. No preamble, no follow-up remarks.\n\n${question}` }] }],
       generationConfig: { temperature: 0.3, maxOutputTokens: 120 },
     }),
   });

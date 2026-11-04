@@ -189,7 +189,9 @@ function replyCommand(incoming, from) {
   const t = incoming.toLowerCase();
   const who = (from || 'them').toLowerCase();
   let m;
+  if (/\bevery month\b|\bmonthly\b|\bso i don'?t have to ask\b/.test(t) && /\b(recharge|top ?up|phone|balance)\b/.test(t)) return `every month recharge ${who}'s phone for 199`;
   if (/\b(balance|recharge|data|validity)\b.*\b(over|finished|low|expired|khatam)\b|\bcan'?t call\b/.test(t)) return `recharge ${who}'s phone for 199`;
+  if (/\b(gift|present)\b.*\b(ideas?|suggest|what (?:should|can))\b|\bwhat (?:should|can) (?:i|we) (?:get|gift)\b/.test(t)) return incoming;
   if ((m = t.match(/\b(?:send|give|pay)\s+me\s+([\d.]+)\s*zec/))) return `send ${m[1]} zec to ${who}`;
   if (/\bwhat do i owe\b|\bhow much do i owe\b|\bmy share\b/.test(t)) return 'request 0.05 zec for dinner';
   if ((m = t.match(/(?:₹|rs\.?\s?)(\d[\d,]*)\s+(swiggy|zomato|amazon|flipkart|blinkit|myntra|uber|bookmyshow)/))) return `send ${who} a ${m[1]} ${m[2]} gift card`;
@@ -200,10 +202,12 @@ function replyCommand(incoming, from) {
     return `happy birthday${name ? ' ' + name.toLowerCase() : ''}!`;
   }
   if (/\b(tired to cook|hungry|starving|nothing to eat|no food)\b/.test(t)) return 'order some food';
-  if (/\b(zec|zcash)\b.*\b(price|worth|rate)\b/.test(t)) return 'zec price';
+  if (/\b(zec|zcash)\b.*\b(price|worth|rate)\b|how much is (?:a |one )?(zec|zcash)/.test(t)) return 'zec price';
+  if (/\?\s*$/.test(t) && t.split(/\s+/).length >= 4) return incoming;
   return null;
 }
 
+const t0 = (s) => s.toLowerCase();
 const SHOP = /\b(gift|present|something|ideas?|what (?:should|can) i (?:get|buy|gift))\b.*\b(for|under|below|within)\b|\b(movie night|date night|housewarming|anniversary gift|diwali gift|wedding gift)\b/;
 
 export async function suggest(text, { incoming, from } = {}) {
@@ -228,7 +232,12 @@ export async function suggest(text, { incoming, from } = {}) {
   // Nothing typed yet: offer the reply the incoming message asks for.
   if (!chips.length && !text.trim() && incoming) {
     const cmd = replyCommand(incoming, from);
-    if (cmd) chips = rules(cmd);
+    const order = cmd ? schedule.parse(cmd) : null;
+    if (order) {
+      const inner = rules(order.command)[0];
+      if (inner) chips = [{ kind: 'schedule', every: order.every, chip: { ...inner, ...label(inner) } }];
+    } else if (cmd && cmd !== incoming) chips = rules(cmd);
+    else if (cmd && !SHOP.test(t0(incoming))) chips = rules(cmd);
   }
   if (!chips.length && text.trim()) chips = await ai(text);
   // People without a real number (the test chat's Mom) never get charged.
