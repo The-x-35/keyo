@@ -18,7 +18,7 @@ final class KeyboardViewController: UIInputViewController {
             host.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             host.view.topAnchor.constraint(equalTo: view.topAnchor),
             host.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            host.view.heightAnchor.constraint(equalToConstant: 292),
+            host.view.heightAnchor.constraint(equalToConstant: KeyMetrics.height),
         ])
         host.didMove(toParent: self)
         self.host = host
@@ -58,7 +58,13 @@ final class KeyboardModel: ObservableObject {
     @Published var status: String?
     @Published var busy = false
     @Published var shift = true
+    @Published var capsLock = false
     @Published var numbers = false
+    @Published var symbols = false
+    @Published var words: [String] = []
+
+    private var lastShiftTap = Date.distantPast
+    private let checker = UITextChecker()
 
     private var suggestTask: Task<Void, Never>?
     private var lastContext = ""
@@ -68,13 +74,77 @@ final class KeyboardModel: ObservableObject {
 
     func type(_ s: String) {
         proxy?.insertText(s)
-        if shift && !numbers { shift = false }
+        if shift && !numbers && !capsLock { shift = false }
+        // Apple's number layer drops back to letters after an apostrophe.
+        if numbers && s == "'" { numbers = false; symbols = false }
         contextChanged()
     }
 
     func space() {
-        proxy?.insertText(" ")
+        // Double space types a period, like Apple's keyboard.
+        let ctx = proxy?.documentContextBeforeInput ?? ""
+        if ctx.hasSuffix(" "), let c = ctx.dropLast().last, c.isLetter || c.isNumber {
+            proxy?.deleteBackward()
+            proxy?.insertText(". ")
+        } else {
+            proxy?.insertText(" ")
+        }
+        if numbers { numbers = false; symbols = false }
         contextChanged()
+    }
+
+    func tapShift() {
+        if Date().timeIntervalSince(lastShiftTap) < 0.3 {
+            capsLock = true
+            shift = true
+        } else {
+            capsLock = false
+            shift.toggle()
+        }
+        lastShiftTap = Date()
+    }
+
+    func toggleNumbers() {
+        numbers.toggle()
+        symbols = false
+    }
+
+    var returnLabel: String {
+        switch proxy?.returnKeyType {
+        case .send: return "send"
+        case .go: return "go"
+        case .search, .google, .yahoo: return "search"
+        case .done: return "done"
+        case .next: return "next"
+        case .join: return "join"
+        default: return "return"
+        }
+    }
+
+    func pickWord(_ w: String) {
+        guard let proxy else { return }
+        let w = w.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+        let ctx = proxy.documentContextBeforeInput ?? ""
+        let partial = ctx.split(separator: " ", omittingEmptySubsequences: false).last.map(String.init) ?? ""
+        for _ in 0..<partial.count { proxy.deleteBackward() }
+        proxy.insertText(w + " ")
+        contextChanged()
+    }
+
+    /// Completions for the word being typed, from the system dictionary.
+    private func updateWords(_ ctx: String) {
+        let partial = ctx.split(separator: " ", omittingEmptySubsequences: false).last.map(String.init) ?? ""
+        guard partial.count >= 1, partial.allSatisfy({ $0.isLetter || $0 == "'" }) else { words = []; return }
+        let range = NSRange(location: 0, length: (partial as NSString).length)
+        var out = [partial]
+        let misspelled = checker.rangeOfMisspelledWord(in: partial, range: range, startingAt: 0, wrap: false, language: "en_US")
+        if misspelled.location != NSNotFound, let fix = checker.guesses(forWordRange: range, in: partial, language: "en_US")?.first {
+            out = ["\"\(partial)\"", fix]
+        }
+        for c in checker.completions(forPartialWordRange: range, in: partial, language: "en_US") ?? [] where out.count < 3 && c.lowercased() != partial.lowercased() {
+            out.append(c)
+        }
+        words = Array(out.prefix(3))
     }
 
     func backspace() {
@@ -100,13 +170,16 @@ final class KeyboardModel: ObservableObject {
     func contextChanged() {
         let ctx = proxy?.documentContextBeforeInput ?? ""
         let trimmed = ctx.replacingOccurrences(of: " ", with: "")
-        shift = ctx.isEmpty || ctx.hasSuffix("\n") || (ctx.hasSuffix(" ") && [".", "!", "?"].contains(trimmed.last.map(String.init) ?? ""))
+        if !capsLock {
+            shift = ctx.isEmpty || ctx.hasSuffix("\n") || (ctx.hasSuffix(" ") && [".", "!", "?"].contains(trimmed.last.map(String.init) ?? ""))
+        }
+        updateWords(ctx)
         guard ctx != lastContext else { return }
         lastContext = ctx
         suggestTask?.cancel()
         let line = ctx.components(separatedBy: "\n").last ?? ctx
         guard line.trimmingCharacters(in: .whitespaces).count >= 4 else {
-            if !busy { chips = [] }
+            if !busy { chips = []; status = nil }
             return
         }
         suggestTask = Task {
@@ -118,7 +191,7 @@ final class KeyboardModel: ObservableObject {
             }
             if let found = try? await API.suggest(line), !Task.isCancelled {
                 chips = found
-                if !found.isEmpty { status = nil }
+                status = nil
             }
         }
     }
@@ -144,7 +217,8 @@ final class KeyboardModel: ObservableObject {
         case "topup": return "Recharging through Bitrefill…"
         case "gift", "esim": return "Buying through Bitrefill…"
         case "swap": return "Getting a swap quote…"
-        case "zec_send": return Keyo.walletMode == "server" ? "Sending shielded ZEC…" : "Opening Zodl…"
+        case "zec_send": return Keyo.walletMode == "server" || Keyo.sandbox ? "Sending shielded ZEC…" : "Opening Zodl…"
+        case "zec_request": return "Making a shielded link…"
         default: return "Working…"
         }
     }

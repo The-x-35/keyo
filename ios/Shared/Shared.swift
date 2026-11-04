@@ -18,6 +18,11 @@ enum Keyo {
         get { defaults.string(forKey: "walletMode") ?? "zodl" }
         set { defaults.set(newValue, forKey: "walletMode") }
     }
+    /// Sandbox runs every flow for real except the payment: test codes, test txids.
+    static var sandbox: Bool {
+        get { defaults.object(forKey: "sandbox") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "sandbox") }
+    }
     /// The keyboard stamps this whenever it runs with Full Access (it can't write the group without it).
     static var keyboardSeen: Date? {
         get { defaults.object(forKey: "keyboardSeen") as? Date }
@@ -67,6 +72,6 @@ enum API {
     }
 
     static func act(_ chip: Chip) async throws -> [String: Any] {
-        try await request("POST", "/act", body: ["chip": chip.raw, "mode": Keyo.walletMode], timeout: 90)
+        try await request("POST", "/act", body: ["chip": chip.raw, "mode": Keyo.walletMode, "sandbox": Keyo.sandbox], timeout: 240)
     }
 }

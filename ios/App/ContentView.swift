@@ -1,14 +1,19 @@
 import SwiftUI
 
+func hideKeyboard() {
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+}
+
 struct ContentView: View {
     @State private var tab = 0
 
     var body: some View {
         TabView(selection: $tab) {
             ForumView().tag(0).tabItem { Label("Forum", systemImage: "building.columns") }
-            PeopleView().tag(1).tabItem { Label("People", systemImage: "person.2") }
-            LedgerView().tag(2).tabItem { Label("Ledger", systemImage: "scroll") }
-            VaultView().tag(3).tabItem { Label("Vault", systemImage: "shield.lefthalf.filled") }
+            ChatView().tag(1).tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right") }
+            PeopleView().tag(2).tabItem { Label("People", systemImage: "person.2") }
+            LedgerView().tag(3).tabItem { Label("Ledger", systemImage: "scroll") }
+            VaultView().tag(4).tabItem { Label("Vault", systemImage: "shield.lefthalf.filled") }
         }
         .tint(Roman.gold)
     }
@@ -32,9 +37,12 @@ struct Page<Content: View>: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture { hideKeyboard() }
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(Roman.marble.ignoresSafeArea())
+        .background(Roman.marble.ignoresSafeArea().onTapGesture { hideKeyboard() })
     }
 }
 
@@ -136,8 +144,11 @@ struct ForumView: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
+            .contentShape(Rectangle())
+            .onTapGesture { focused = false }
         }
-        .background(Roman.marble.ignoresSafeArea())
+        .scrollDismissesKeyboard(.interactively)
+        .background(Roman.marble.ignoresSafeArea().onTapGesture { focused = false })
         .onAppear(perform: refresh)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in refresh() }
     }
@@ -186,6 +197,7 @@ struct Person: Identifiable, Hashable {
     var phone = ""
     var operatorName = "jio"
     var zec = ""
+    var email = ""
     var aliases: [String] = []
 
     init() {}
@@ -194,11 +206,12 @@ struct Person: Identifiable, Hashable {
         phone = d["phone"] as? String ?? ""
         operatorName = d["operator"] as? String ?? "jio"
         zec = d["zec"] as? String ?? ""
+        email = d["email"] as? String ?? ""
         aliases = d["aliases"] as? [String] ?? []
     }
 
     var json: [String: Any] {
-        ["name": name, "phone": phone, "operator": operatorName, "zec": zec,
+        ["name": name, "phone": phone, "operator": operatorName, "zec": zec, "email": email,
          "aliases": Array(Set(aliases + [name.lowercased()]))]
     }
 }
@@ -207,12 +220,38 @@ struct PeopleView: View {
     @State private var people: [Person] = []
     @State private var editing: Person?
     @State private var error: String?
+    @State private var query = ""
+    @State private var syncing = false
+
+    private var shown: [Person] {
+        let q = query.lowercased()
+        let list = q.isEmpty ? people : people.filter { $0.name.lowercased().contains(q) || $0.phone.contains(q) }
+        return list.sorted { a, b in
+            let rank = { (p: Person) in p.name == "Me" ? 0 : (!p.zec.isEmpty ? 1 : 2) }
+            return rank(a) != rank(b) ? rank(a) < rank(b) : a.name < b.name
+        }
+    }
 
     var body: some View {
         Page(title: "People") {
             if let error { Text(error).font(.footnote).foregroundStyle(Roman.porphyry) }
+            HStack(spacing: 10) {
+                HStack {
+                    Image(systemName: "magnifyingglass").foregroundStyle(Roman.faded)
+                    TextField("Search", text: $query).autocorrectionDisabled()
+                }
+                .padding(10)
+                .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 12))
+                Button { Task { await sync() } } label: {
+                    Image(systemName: syncing ? "hourglass" : "person.crop.circle.badge.plus")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Roman.gold)
+                        .frame(width: 44, height: 44)
+                        .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
             VStack(spacing: 10) {
-                ForEach(people) { p in
+                ForEach(shown) { p in
                     Button { editing = p } label: { row(p) }.buttonStyle(.plain)
                 }
                 Button { editing = Person() } label: {
@@ -225,8 +264,10 @@ struct PeopleView: View {
                 }
             }
         }
-        .task { await load() }
-        .refreshable { await load() }
+        .task {
+            if ContactsSync.authorized || people.isEmpty { await sync() } else { await load() }
+        }
+        .refreshable { await sync() }
         .sheet(item: $editing) { p in
             PersonEditor(person: p) { updated in
                 if let i = people.firstIndex(where: { $0.id == updated.id }) { people[i] = updated } else { people.append(updated) }
@@ -237,6 +278,13 @@ struct PeopleView: View {
             }
             .presentationDetents([.medium, .large])
         }
+    }
+
+    private func sync() async {
+        syncing = true
+        defer { syncing = false }
+        do { _ = try await ContactsSync.requestAndSync() } catch { self.error = error.localizedDescription }
+        await load()
     }
 
     private func row(_ p: Person) -> some View {
@@ -250,7 +298,7 @@ struct PeopleView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(p.name).font(.headline).foregroundStyle(Roman.ink)
                 HStack(spacing: 10) {
-                    if !p.phone.isEmpty { Label(p.operatorName.capitalized, systemImage: "iphone.gen3") }
+                    if !p.phone.isEmpty { Label("\(p.operatorName.capitalized) · \(p.phone)", systemImage: "iphone.gen3") }
                     if !p.zec.isEmpty { Label("ZEC", systemImage: "shield.lefthalf.filled") }
                 }
                 .font(.caption)
@@ -293,6 +341,10 @@ struct PersonEditor: View {
                     Picker("Operator", selection: $person.operatorName) {
                         ForEach(["jio", "airtel", "vi", "bsnl"], id: \.self) { Text($0.capitalized) }
                     }
+                }
+                Section("Email") {
+                    TextField("For gift cards", text: $person.email)
+                        .keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
                 }
                 Section("Zcash") {
                     TextField("u1…", text: $person.zec, axis: .vertical)
@@ -413,6 +465,9 @@ extension ISO8601DateFormatter {
 // MARK: Vault
 
 struct VaultView: View {
+    @State private var live = !Keyo.sandbox
+    @State private var test = "—"
+    @State private var testAddress: String?
     @State private var server = Keyo.serverURL
     @State private var token = Keyo.token
     @State private var status = ""
@@ -426,12 +481,17 @@ struct VaultView: View {
                 balance("Bitrefill", bitrefill, icon: "gift")
                 balance("Aegis", aegis, icon: "shield.lefthalf.filled")
             }
-            if let aegisAddress {
-                Tablet {
-                    Eyebrow(text: "Aegis address")
-                    Text(aegisAddress).font(.caption.monospaced()).foregroundStyle(Roman.ink).textSelection(.enabled)
+            Tablet {
+                Toggle(isOn: $live) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(live ? "LIVE" : "SANDBOX").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(live ? Roman.porphyry : Roman.gold)
+                        Text(live ? "Real money" : "Test codes, no payments").font(.caption).foregroundStyle(Roman.faded)
+                    }
                 }
+                .tint(Roman.porphyry)
             }
+            if let aegisAddress { addressCard("Aegis · mainnet", aegisAddress) }
+            if let testAddress { addressCard("Aegis · testnet · \(test)", testAddress) }
             Tablet {
                 Eyebrow(text: "Server")
                 TextField("http://192.168.1.10:8787", text: $server)
@@ -451,6 +511,21 @@ struct VaultView: View {
         .refreshable { await load() }
         .onChange(of: server) { _, v in Keyo.serverURL = v }
         .onChange(of: token) { _, v in Keyo.token = v }
+        .onChange(of: live) { _, v in Keyo.sandbox = !v }
+        .onAppear { live = !Keyo.sandbox }
+    }
+
+    private func addressCard(_ title: String, _ address: String) -> some View {
+        Tablet {
+            HStack {
+                Eyebrow(text: title)
+                Spacer()
+                Button { UIPasteboard.general.string = address } label: {
+                    Image(systemName: "doc.on.doc").foregroundStyle(Roman.gold)
+                }
+            }
+            Text(address).font(.caption2.monospaced()).foregroundStyle(Roman.ink).lineLimit(3).truncationMode(.middle).textSelection(.enabled)
+        }
     }
 
     private func balance(_ title: String, _ value: String, icon: String) -> some View {
@@ -472,9 +547,13 @@ struct VaultView: View {
                 bitrefill = "\(b["balance"] ?? 0) \(b["currency"] ?? "")"
             } else { bitrefill = "—" }
             if let z = j["zec"] as? [String: Any] {
-                aegis = "\(z["spendable"] ?? z["total"] ?? 0) ZEC"
-                aegisAddress = z["address"] as? String
+                aegis = "\(z["total"] ?? 0) ZEC"
+                aegisAddress = z["unified"] as? String
             } else { aegis = "Off" }
+            if let z = j["zecTest"] as? [String: Any] {
+                test = "\(z["total"] ?? 0) TAZ"
+                testAddress = z["unified"] as? String
+            }
             status = "Connected"
         } catch { status = error.localizedDescription }
     }

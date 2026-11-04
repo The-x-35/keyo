@@ -27,6 +27,7 @@ targets:
         UILaunchScreen:
           UIColorName: LaunchMarble
         NSFaceIDUsageDescription: Approve purchases over your limit.
+        NSContactsUsageDescription: Pay, recharge and gift the people you know by name.
         NSAppTransportSecurity: { NSAllowsArbitraryLoads: true }
         CFBundleURLTypes:
           - CFBundleURLName: com.arpit.keyo
