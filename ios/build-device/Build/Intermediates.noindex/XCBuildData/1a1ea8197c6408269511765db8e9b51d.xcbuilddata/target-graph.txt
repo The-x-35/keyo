@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'Keyo' in project 'Keyo'
+➜ Explicit dependency on target 'KeyoKeyboard' in project 'Keyo'
+Target 'KeyoKeyboard' in project 'Keyo' (no dependencies)

@@ -83,6 +83,8 @@ final class KeyboardModel: ObservableObject {
 
     private var suggestTask: Task<Void, Never>?
     private var lastAutopilot: String?
+    /// The message Keyo already answered; its actions aren't offered again.
+    private var handledIncoming: String?
     private var lastContext = ""
 
     var proxy: UITextDocumentProxy? { controller?.textDocumentProxy }
@@ -180,6 +182,8 @@ final class KeyboardModel: ObservableObject {
         if let text = Keyo.pendingInsert, !text.isEmpty {
             Keyo.pendingInsert = nil
             proxy?.insertText(text)
+            handledIncoming = Keyo.incoming?.text
+            chips = []
             status = "Done ✓"
         }
     }
@@ -200,6 +204,10 @@ final class KeyboardModel: ObservableObject {
         lastContext = key
         suggestTask?.cancel()
         let line = ctx.components(separatedBy: "\n").last ?? ctx
+        if empty, let incoming, incoming.text == handledIncoming {
+            chips = []
+            return
+        }
         if empty, let incoming {
             // Empty reply box: offer what the other person just asked for.
             suggestTask = Task {
@@ -268,6 +276,7 @@ final class KeyboardModel: ObservableObject {
 
     private func handle(_ out: [String: Any], _ chip: Chip) {
         let state = out["status"] as? String ?? ""
+        if out["text"] != nil { handledIncoming = Keyo.incoming?.text }
         if let text = out["text"] as? String {
             // A typed command gets replaced by its result; a suggestion adds below what you wrote.
             if chip.isSuggestion {

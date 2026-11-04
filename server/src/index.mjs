@@ -139,7 +139,19 @@ async function bitrefill(chip, { approved = false, sandbox = false } = {}) {
   return { status: 'done', invoice_id: inv.invoice_id, activity_id: entry.id, text };
 }
 
+// The same payment or purchase to the same person twice in two minutes is a mistake
+// (a double tap, a stale button), never a second order.
+const recent = new Map();
+function duplicate(chip) {
+  if (!['topup', 'gift', 'esim', 'zec_send'].includes(chip.kind)) return false;
+  const key = [chip.kind, chip.name, chip.product_id || chip.brand || chip.operator || chip.address, chip.usd ?? chip.amount].join('|');
+  const last = recent.get(key);
+  recent.set(key, Date.now());
+  return last && Date.now() - last < 120_000;
+}
+
 async function act(chip, mode = 'zodl', sandbox = false) {
+  if (duplicate(chip)) return { status: 'skipped', message: 'Already done a moment ago' };
   switch (chip.kind) {
     case 'topup':
     case 'gift':

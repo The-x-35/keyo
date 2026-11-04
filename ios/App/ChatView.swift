@@ -51,7 +51,7 @@ struct ChatThread: Identifiable {
             Scene(opener: say("Mom", "Can you do this every month so I don't have to ask? 🙈"),
                   thanks: say("Mom", "No more asking 😄")),
         ]),
-        ChatThread(id: "sakshi", name: "Sakshi", avatar: "P", tint: Color(hex: 0xD45D8A), members: [], scenes: [
+        ChatThread(id: "sakshi", name: "Sakshi", avatar: "S", tint: Color(hex: 0xD45D8A), members: [], scenes: [
             Scene(opener: say("Sakshi", "It's my birthday today!! 🎂🥳"),
                   thanks: say("Sakshi", "Aww just got the email 🥹 thank you!!")),
         ]),

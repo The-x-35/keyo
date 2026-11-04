@@ -4,6 +4,18 @@
 
 Built at Free Society Hack, Mumbai, 4 Nov 2026, for **Agentic Commerce (Bitrefill)** and **Privacy (Zcash)**.
 
+## Screenshots
+
+| Chats | Mom: recharge, no taps | Mom: every month |
+|---|---|---|
+| <img src="docs/screenshots/chats.png" width="230"> | <img src="docs/screenshots/mom-recharge.png" width="230"> | <img src="docs/screenshots/mom-monthly.png" width="230"> |
+| **Sakshi: gift ideas** | **Face ID above the limit** | **Card emailed** |
+| <img src="docs/screenshots/sakshi-gift.png" width="230"> | <img src="docs/screenshots/approve.png" width="230"> | <img src="docs/screenshots/sakshi-sent.png" width="230"> |
+| **Rahul: $30 in private ZEC** | **Alex: free times from the calendar** | **Alex: private invoice** |
+| <img src="docs/screenshots/rahul-zec.png" width="230"> | <img src="docs/screenshots/alex-calendar.png" width="230"> | <img src="docs/screenshots/alex-invoice.png" width="230"> |
+| **History: limits and calendar** | **Home** | |
+| <img src="docs/screenshots/history.png" width="230"> | <img src="docs/screenshots/home.png" width="230"> | |
+
 ## What it does
 
 | Chat | They say | Keyo | Human steps |
@@ -17,7 +29,7 @@ Built at Free Society Hack, Mumbai, 4 Nov 2026, for **Agentic Commerce (Bitrefil
 | Alex (client) | "I only hold USDC on Solana" | A NEAR Intents deposit address: his USDC lands as your ZEC | press send |
 | anywhere | "zec price", "$50 in zec", any question | Live price, conversion, or an instant answer | tap |
 
-Messages no rule knows go to Gemini, which picks the errand. The app's **Chat** tab is a WhatsApp look-alike with these four chats; Bitrefill purchases for these test contacts use the real catalog and prices but skip payment. Shielded testnet sends from Aegis are real: `ee6f137db6c90f076c1d719a8d9153c04395c077426176a918c9f57c4b889c9c` (block 4581946) and `a79c328492987dc87597d1e29e4e89ac91c46a49ae5bef990829e1d11025f3c3`.
+Messages no rule knows go to Gemini, which picks the errand. The app's **Chat** tab is a WhatsApp look-alike with these four chats; Bitrefill purchases for these test contacts use the real catalog and prices but skip payment. Shielded testnet sends from Aegis are real: `ee6f137db6c90f076c1d719a8d9153c04395c077426176a918c9f57c4b889c9c` (block 4581946), `a79c328492987dc87597d1e29e4e89ac91c46a49ae5bef990829e1d11025f3c3` and `10a343a4789e6a15604acf4ee674a7db690142d504d88d3a3808469dae25e6bb` ([Zexplorer](https://zexplorer.app/testnet/tx/ee6f137db6c90f076c1d719a8d9153c04395c077426176a918c9f57c4b889c9c)).
 
 ## Agentic, not chat
 

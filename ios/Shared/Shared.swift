@@ -54,9 +54,18 @@ enum Keyo {
         set { defaults.set(newValue, forKey: "keyboardSeen") }
     }
     /// Text the app hands the keyboard after an approval, typed in when the keyboard comes back.
+    /// An approved purchase's reply, waiting for the keyboard to type it. It goes stale after
+    /// two minutes, so an old one never lands in a different chat.
     static var pendingInsert: String? {
-        get { defaults.string(forKey: "pendingInsert") }
-        set { defaults.set(newValue, forKey: "pendingInsert") }
+        get {
+            guard let text = defaults.string(forKey: "pendingInsert") else { return nil }
+            let at = defaults.double(forKey: "pendingInsertAt")
+            return Date().timeIntervalSince1970 - at < 120 ? text : nil
+        }
+        set {
+            defaults.set(newValue, forKey: "pendingInsert")
+            defaults.set(Date().timeIntervalSince1970, forKey: "pendingInsertAt")
+        }
     }
 }
 
