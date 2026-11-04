@@ -212,16 +212,9 @@ final class KeyboardModel: ObservableObject {
             // Empty reply box: offer what the other person just asked for.
             suggestTask = Task {
                 guard hasFullAccess, let found = try? await API.suggest("", incoming: incoming), !Task.isCancelled else { return }
+                // Only offer the button; nothing runs until it's tapped.
                 chips = found
                 status = nil
-                // One clear action for a fresh message: Autopilot runs it, you just hit send.
-                if Keyo.autopilot, found.count == 1, let chip = found.first,
-                   ["topup", "zec_send", "zec_request", "esim", "gift", "swap", "swap_in"].contains(chip.kind),
-                   lastAutopilot != incoming.text {
-                    lastAutopilot = incoming.text
-                    try? await Task.sleep(nanoseconds: 700_000_000)
-                    if !Task.isCancelled { tap(chip, auto: true) }
-                }
             }
             return
         }

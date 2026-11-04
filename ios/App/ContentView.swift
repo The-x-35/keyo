@@ -555,13 +555,6 @@ struct VaultView: View {
                 balance("Zcash", aegis, icon: "shield.lefthalf.filled")
             }
             Tablet {
-                Toggle(isOn: $autopilot) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("AUTOPILOT").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(Roman.gold)
-                        Text("Small things, no tap").font(.caption).foregroundStyle(Roman.faded)
-                    }
-                }
-                .tint(Roman.gold)
                 Toggle(isOn: $live) {
                     Text("REAL MONEY").font(Roman.caps(15, .bold)).tracking(2).foregroundStyle(live ? Roman.porphyry : Roman.gold)
                 }
