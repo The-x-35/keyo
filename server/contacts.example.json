@@ -1,0 +1,5 @@
+[
+  { "name": "Me", "aliases": ["me", "my"], "phone": "", "operator": "jio", "zec": "" },
+  { "name": "Mom", "aliases": ["mom", "mummy", "maa", "mother"], "phone": "", "operator": "jio", "zec": "" },
+  { "name": "Rahul", "aliases": ["rahul"], "phone": "", "operator": "airtel", "zec": "" }
+]
