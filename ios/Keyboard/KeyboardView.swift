@@ -60,10 +60,10 @@ struct KeyboardView: View {
             .frame(width: width)
     }
 
-    private var board: Color { scheme == .dark ? Color(white: 0.11) : Color(red: 0.82, green: 0.83, blue: 0.85) }
-    private var keyFill: Color { scheme == .dark ? Color(white: 0.42) : .white }
-    private var specialFill: Color { scheme == .dark ? Color(white: 0.27) : Color(red: 0.67, green: 0.69, blue: 0.73) }
-    private var ink: Color { scheme == .dark ? .white : .black }
+    private var board: Color { Roman.board }
+    private var keyFill: Color { Roman.key }
+    private var specialFill: Color { Roman.keySpecial }
+    private var ink: Color { Roman.ink }
 }
 
 struct Key: View {
@@ -120,14 +120,10 @@ struct Strip: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text("k")
-                .font(.system(size: 17, weight: .heavy, design: .rounded))
-                .foregroundStyle(.white)
-                .frame(width: 30, height: 30)
-                .background(Circle().fill(LinearGradient(colors: [Color(red: 0.96, green: 0.72, blue: 0.16), Color(red: 0.93, green: 0.45, blue: 0.1)], startPoint: .topLeading, endPoint: .bottomTrailing)))
+            Medallion(size: 30)
             if model.busy {
-                ProgressView().scaleEffect(0.8)
-                Text(model.status ?? "Working…").font(.system(size: 14, weight: .medium)).lineLimit(1)
+                ProgressView().scaleEffect(0.8).tint(Roman.gold)
+                Text(model.status ?? "Working…").font(.system(size: 14, weight: .medium)).foregroundStyle(Roman.ink).lineLimit(1)
                 Spacer()
             } else if !model.chips.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -139,9 +135,9 @@ struct Strip: View {
                     }
                 }
             } else {
-                Text(model.status ?? "Try “recharge mom's jio for 199”")
+                Text(model.status ?? "")
                     .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Roman.faded)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
                 Spacer()
@@ -169,20 +165,18 @@ struct ChipView: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: icon).font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(red: 0.93, green: 0.55, blue: 0.1))
+                .foregroundStyle(Roman.gold)
             VStack(alignment: .leading, spacing: 0) {
                 Text(chip.title).font(.system(size: 13.5, weight: .semibold)).lineLimit(1)
                 if !chip.subtitle.isEmpty {
-                    Text(chip.subtitle).font(.system(size: 10.5)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(chip.subtitle.uppercased()).font(Roman.caps(8.5, .bold)).tracking(1).foregroundStyle(Roman.faded).lineLimit(1)
                 }
             }
         }
         .padding(.horizontal, 11)
         .frame(height: 38)
-        .background(
-            Capsule().fill(scheme == .dark ? Color(white: 0.24) : .white)
-        )
-        .overlay(Capsule().stroke(Color(red: 0.95, green: 0.6, blue: 0.15).opacity(0.55), lineWidth: 1))
-        .foregroundStyle(scheme == .dark ? .white : .black)
+        .background(Capsule().fill(Roman.key))
+        .overlay(Capsule().strokeBorder(Roman.gold.opacity(0.7), lineWidth: 1))
+        .foregroundStyle(Roman.ink)
     }
 }

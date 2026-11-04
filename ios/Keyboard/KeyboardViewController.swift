@@ -26,6 +26,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        if hasFullAccess { Keyo.keyboardSeen = Date() }
         model.flushPendingInsert()
         model.contextChanged()
     }

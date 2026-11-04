@@ -8,7 +8,7 @@ struct KeyoApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .tint(Color(red: 0.93, green: 0.5, blue: 0.1))
+                .tint(Roman.gold)
                 .onOpenURL { url in
                     guard url.scheme == "keyo", url.host == "approve" else { return }
                     approvalID = URLComponents(url: url, resolvingAgainstBaseURL: false)?
@@ -32,31 +32,41 @@ struct ApproveView: View {
     @State private var result: String?
 
     var body: some View {
-        VStack(spacing: 18) {
-            Image(systemName: "checkmark.shield.fill").font(.system(size: 48)).foregroundStyle(.tint)
-            Text("Approve purchase").font(.title2.bold())
+        VStack(spacing: 20) {
+            Medallion(size: 72).padding(.top, 36)
+            Text("APPROVE").font(Roman.caps(26, .black)).tracking(6).foregroundStyle(Roman.ink)
+            GoldRule().padding(.horizontal, 40)
             if let inr = request["inr"] {
                 let chip = request["chip"] as? [String: Any] ?? [:]
-                Text("\(chip["title"] as? String ?? (request["product"] as? String ?? ""))")
-                    .font(.headline)
-                Text("₹\(String(describing: inr)) is over your limit").foregroundStyle(.secondary)
-            }
-            if let result {
-                Text(result).font(.callout).multilineTextAlignment(.center).padding().background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                Text("Go back to the chat: Keyo types it in.").font(.footnote).foregroundStyle(.secondary)
-                Button("Done") { dismiss() }.buttonStyle(.borderedProminent)
-            } else if state == "working" {
-                ProgressView("Buying through Bitrefill…")
-            } else {
-                Button { Task { await approve() } } label: {
-                    Label("Approve with Face ID", systemImage: "faceid").frame(maxWidth: .infinity)
+                VStack(spacing: 6) {
+                    Text("₹\(String(describing: inr))").font(Roman.caps(44, .bold)).foregroundStyle(Roman.ink)
+                    Text(chip["title"] as? String ?? (request["product"] as? String ?? ""))
+                        .font(.headline).foregroundStyle(Roman.faded).multilineTextAlignment(.center)
                 }
-                .buttonStyle(.borderedProminent).controlSize(.large)
-                Button("Decline", role: .destructive) { Task { await decline() } }
             }
             Spacer()
+            if let result {
+                Text(result).font(.callout).foregroundStyle(Roman.ink).multilineTextAlignment(.center)
+                    .padding(16).frame(maxWidth: .infinity)
+                    .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 14))
+                Button("Done") { dismiss() }.font(Roman.caps(16, .bold)).foregroundStyle(Roman.gold).padding(.bottom, 20)
+            } else if state == "working" {
+                ProgressView().tint(Roman.gold).padding(.bottom, 40)
+            } else {
+                Button { Task { await approve() } } label: {
+                    Label("Approve", systemImage: "faceid")
+                        .font(Roman.caps(17, .bold)).tracking(2)
+                        .frame(maxWidth: .infinity).padding(.vertical, 16)
+                        .foregroundStyle(Color(hex: 0x3A280A))
+                        .background(LinearGradient(colors: [Color(hex: 0xE9CC82), Color(hex: 0xC09A48)], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 14))
+                }
+                Button("Decline") { Task { await decline() } }
+                    .font(Roman.caps(14, .bold)).foregroundStyle(Roman.porphyry).padding(.bottom, 20)
+            }
         }
-        .padding(28)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Roman.marble.ignoresSafeArea())
         .task { await load() }
     }
 

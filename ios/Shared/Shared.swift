@@ -18,6 +18,11 @@ enum Keyo {
         get { defaults.string(forKey: "walletMode") ?? "zodl" }
         set { defaults.set(newValue, forKey: "walletMode") }
     }
+    /// The keyboard stamps this whenever it runs with Full Access (it can't write the group without it).
+    static var keyboardSeen: Date? {
+        get { defaults.object(forKey: "keyboardSeen") as? Date }
+        set { defaults.set(newValue, forKey: "keyboardSeen") }
+    }
     /// Text the app hands the keyboard after an approval, typed in when the keyboard comes back.
     static var pendingInsert: String? {
         get { defaults.string(forKey: "pendingInsert") }

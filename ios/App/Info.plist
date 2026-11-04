@@ -42,8 +42,15 @@
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Approve purchases over your limit.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Cinzel.ttf</string>
+	</array>
 	<key>UILaunchScreen</key>
-	<dict/>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchMarble</string>
+	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

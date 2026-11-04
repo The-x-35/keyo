@@ -43,5 +43,9 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).KeyboardViewController</string>
 	</dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Cinzel.ttf</string>
+	</array>
 </dict>
 </plist>

@@ -23,7 +23,9 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Keyo
-        UILaunchScreen: {}
+        UIAppFonts: [Cinzel.ttf]
+        UILaunchScreen:
+          UIColorName: LaunchMarble
         NSFaceIDUsageDescription: Approve purchases over your limit.
         NSAppTransportSecurity: { NSAllowsArbitraryLoads: true }
         CFBundleURLTypes:
@@ -50,6 +52,7 @@ targets:
       path: Keyboard/Info.plist
       properties:
         CFBundleDisplayName: Keyo
+        UIAppFonts: [Cinzel.ttf]
         NSAppTransportSecurity: { NSAllowsArbitraryLoads: true }
         NSExtension:
           NSExtensionPointIdentifier: com.apple.keyboard-service

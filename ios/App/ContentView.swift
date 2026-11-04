@@ -1,55 +1,184 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var tab = 0
+
     var body: some View {
-        TabView {
-            HomeView().tabItem { Label("Keyo", systemImage: "keyboard") }
-            ContactsView().tabItem { Label("People", systemImage: "person.2") }
-            ActivityView().tabItem { Label("Activity", systemImage: "list.bullet.rectangle") }
-            SettingsView().tabItem { Label("Settings", systemImage: "gearshape") }
+        TabView(selection: $tab) {
+            ForumView().tag(0).tabItem { Label("Forum", systemImage: "building.columns") }
+            PeopleView().tag(1).tabItem { Label("People", systemImage: "person.2") }
+            LedgerView().tag(2).tabItem { Label("Ledger", systemImage: "scroll") }
+            VaultView().tag(3).tabItem { Label("Vault", systemImage: "shield.lefthalf.filled") }
         }
+        .tint(Roman.gold)
     }
 }
 
-struct HomeView: View {
-    @State private var tryText = ""
+/// Screen frame: marble ground, a Roman-capitals title and a gold rule.
+struct Page<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Pay and buy from any chat").font(.title2.bold())
-                        Text("Shielded Zcash, swaps, top-ups and gift cards, right in your keyboard.")
-                            .foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text(title)
+                    .font(Roman.caps(30, .bold))
+                    .tracking(3)
+                    .foregroundStyle(Roman.ink)
+                    .padding(.top, 12)
+                GoldRule()
+                content
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .background(Roman.marble.ignoresSafeArea())
+    }
+}
+
+/// A stone tablet card.
+struct Tablet<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) { content }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Roman.goldSoft.opacity(0.45), lineWidth: 0.8))
+    }
+}
+
+struct Eyebrow: View {
+    let text: String
+    var body: some View {
+        Text(text.uppercased()).font(Roman.caps(11, .bold)).tracking(2).foregroundStyle(Roman.gold)
+    }
+}
+
+// MARK: Forum
+
+struct ForumView: View {
+    @State private var tryText = ""
+    @State private var mode = Keyo.walletMode
+    @State private var keyboardReady = false
+    @FocusState private var focused: Bool
+
+    private let spells = [
+        ("iphone.gen3", "recharge mom's jio for 199"),
+        ("gift", "happy birthday bro!"),
+        ("shield.lefthalf.filled", "send 0.01 zec to rahul"),
+        ("arrow.down.left", "request 0.05 zec for dinner"),
+        ("arrow.triangle.2.circlepath", "swap 0.01 zec to usdc"),
+        ("simcard", "landing in dubai tomorrow"),
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 22) {
+                VStack(spacing: 10) {
+                    Colosseum()
+                        .frame(height: 150)
+                        .padding(.horizontal, 8)
+                    Text("KEYO")
+                        .font(Roman.caps(44, .black))
+                        .tracking(14)
+                        .foregroundStyle(Roman.ink)
+                    Text("PECVNIA · TACITA")
+                        .font(Roman.caps(11, .semibold))
+                        .tracking(4)
+                        .foregroundStyle(Roman.gold)
+                }
+                .padding(.top, 18)
+
+                if !keyboardReady {
+                    Tablet {
+                        Eyebrow(text: "Raise the keyboard")
+                        step("1", "Settings › General › Keyboard › Keyboards")
+                        step("2", "Add New Keyboard › Keyo")
+                        step("3", "Keyo › Allow Full Access")
                     }
-                    .padding(.vertical, 6)
                 }
-                Section("Set up") {
-                    Label("Settings › General › Keyboard › Keyboards › Add New Keyboard › Keyo", systemImage: "1.circle.fill")
-                    Label("Tap Keyo › turn on Allow Full Access", systemImage: "2.circle.fill")
-                    Label("In any chat, hold 🌐 and pick Keyo", systemImage: "3.circle.fill")
+
+                Tablet {
+                    Eyebrow(text: "Pay with")
+                    HStack(spacing: 10) {
+                        modeButton("zodl", title: "Zodl", icon: "iphone")
+                        modeButton("server", title: "Aegis", icon: "shield.lefthalf.filled")
+                    }
                 }
-                Section("Try it") {
-                    TextField("recharge mom's jio for 199", text: $tryText, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-                Section("Things to type") {
-                    ForEach([
-                        "recharge mom's jio for 199",
-                        "send 0.01 zec to rahul",
-                        "request 0.05 zec for dinner",
-                        "swap 0.01 zec to usdc",
-                        "happy birthday bro!",
-                        "send mom a 100 swiggy gift card",
-                        "flying to dubai tomorrow",
-                    ], id: \.self) { Text($0).font(.callout.monospaced()) }
+
+                Tablet {
+                    Eyebrow(text: "Try it")
+                    TextField("Type here with Keyo", text: $tryText, axis: .vertical)
+                        .lineLimit(2...5)
+                        .focused($focused)
+                        .padding(12)
+                        .background(Roman.marble, in: RoundedRectangle(cornerRadius: 10))
+                    VStack(spacing: 0) {
+                        ForEach(spells, id: \.1) { icon, line in
+                            Button {
+                                tryText = line
+                                focused = true
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: icon).frame(width: 20).foregroundStyle(Roman.gold)
+                                    Text(line).font(.callout).foregroundStyle(Roman.ink)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 9)
+                            }
+                            if line != spells.last?.1 { Divider().overlay(Roman.stone) }
+                        }
+                    }
                 }
             }
-            .navigationTitle("Keyo")
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+        }
+        .background(Roman.marble.ignoresSafeArea())
+        .onAppear(perform: refresh)
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in refresh() }
+    }
+
+    private func refresh() {
+        let enabled = (UserDefaults.standard.array(forKey: "AppleKeyboards") as? [String] ?? []).contains { $0.hasPrefix("com.arpit.keyo") }
+        keyboardReady = enabled && Keyo.keyboardSeen != nil
+        mode = Keyo.walletMode
+    }
+
+    private func step(_ n: String, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(n).font(Roman.caps(15, .bold)).foregroundStyle(Roman.gold).frame(width: 16)
+            Text(text).font(.callout).foregroundStyle(Roman.ink)
         }
     }
+
+    private func modeButton(_ value: String, title: String, icon: String) -> some View {
+        let on = mode == value
+        return Button {
+            mode = value
+            Keyo.walletMode = value
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 20, weight: .medium))
+                Text(title.uppercased()).font(Roman.caps(13, .bold)).tracking(2)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .foregroundStyle(on ? Color(hex: 0x3A280A) : Roman.ink)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(on ? AnyShapeStyle(LinearGradient(colors: [Color(hex: 0xE9CC82), Color(hex: 0xC09A48)], startPoint: .top, endPoint: .bottom)) : AnyShapeStyle(Roman.marble))
+            )
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Roman.goldSoft.opacity(on ? 0 : 0.5), lineWidth: 0.8))
+        }
+        .buttonStyle(.plain)
+    }
 }
+
+// MARK: People
 
 struct Person: Identifiable, Hashable {
     var id = UUID()
@@ -57,6 +186,7 @@ struct Person: Identifiable, Hashable {
     var phone = ""
     var operatorName = "jio"
     var zec = ""
+    var aliases: [String] = []
 
     init() {}
     init(_ d: [String: Any]) {
@@ -66,7 +196,6 @@ struct Person: Identifiable, Hashable {
         zec = d["zec"] as? String ?? ""
         aliases = d["aliases"] as? [String] ?? []
     }
-    var aliases: [String] = []
 
     var json: [String: Any] {
         ["name": name, "phone": phone, "operator": operatorName, "zec": zec,
@@ -74,37 +203,64 @@ struct Person: Identifiable, Hashable {
     }
 }
 
-struct ContactsView: View {
+struct PeopleView: View {
     @State private var people: [Person] = []
+    @State private var editing: Person?
     @State private var error: String?
-    @State private var saved = false
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let error { Text(error).foregroundStyle(.red) }
-                ForEach($people) { $p in
-                    Section(p.name.isEmpty ? "New person" : p.name) {
-                        TextField("Name", text: $p.name)
-                        TextField("Phone (+91…)", text: $p.phone).keyboardType(.phonePad)
-                        Picker("Operator", selection: $p.operatorName) {
-                            ForEach(["jio", "airtel", "vi", "bsnl"], id: \.self) { Text($0.capitalized) }
-                        }
-                        TextField("Zcash address (u1…)", text: $p.zec)
-                            .textInputAutocapitalization(.never).autocorrectionDisabled()
-                            .font(.footnote.monospaced())
-                    }
+        Page(title: "People") {
+            if let error { Text(error).font(.footnote).foregroundStyle(Roman.porphyry) }
+            VStack(spacing: 10) {
+                ForEach(people) { p in
+                    Button { editing = p } label: { row(p) }.buttonStyle(.plain)
                 }
-                .onDelete { people.remove(atOffsets: $0) }
-                Button("Add person") { people.append(Person()) }
+                Button { editing = Person() } label: {
+                    Label("Add person", systemImage: "plus")
+                        .font(Roman.caps(14, .bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .foregroundStyle(Roman.gold)
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Roman.goldSoft.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [4, 4])))
+                }
             }
-            .navigationTitle("People")
-            .toolbar {
-                Button(saved ? "Saved" : "Save") { Task { await save() } }
-            }
-            .task { await load() }
-            .refreshable { await load() }
         }
+        .task { await load() }
+        .refreshable { await load() }
+        .sheet(item: $editing) { p in
+            PersonEditor(person: p) { updated in
+                if let i = people.firstIndex(where: { $0.id == updated.id }) { people[i] = updated } else { people.append(updated) }
+                Task { await save() }
+            } onDelete: {
+                people.removeAll { $0.id == p.id }
+                Task { await save() }
+            }
+            .presentationDetents([.medium, .large])
+        }
+    }
+
+    private func row(_ p: Person) -> some View {
+        HStack(spacing: 14) {
+            Text(String(p.name.prefix(1)).uppercased())
+                .font(Roman.caps(20, .bold))
+                .foregroundStyle(Roman.gold)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(Roman.marble))
+                .overlay(Circle().strokeBorder(Roman.goldSoft.opacity(0.6), lineWidth: 0.8))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(p.name).font(.headline).foregroundStyle(Roman.ink)
+                HStack(spacing: 10) {
+                    if !p.phone.isEmpty { Label(p.operatorName.capitalized, systemImage: "iphone.gen3") }
+                    if !p.zec.isEmpty { Label("ZEC", systemImage: "shield.lefthalf.filled") }
+                }
+                .font(.caption)
+                .foregroundStyle(Roman.faded)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.footnote).foregroundStyle(Roman.faded)
+        }
+        .padding(12)
+        .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func load() async {
@@ -118,52 +274,119 @@ struct ContactsView: View {
     private func save() async {
         do {
             _ = try await API.request("POST", "/contacts", body: ["contacts": people.map(\.json)])
-            saved = true
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
-            saved = false
         } catch { self.error = error.localizedDescription }
     }
 }
 
-struct ActivityView: View {
-    @State private var items: [[String: Any]] = []
-    @State private var spent = 0
-    @State private var caps: [String: Any] = [:]
-    @State private var error: String?
+struct PersonEditor: View {
+    @State var person: Person
+    var onSave: (Person) -> Void
+    var onDelete: () -> Void
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            List {
-                if let error { Text(error).foregroundStyle(.red) }
-                Section("Limits") {
-                    LabeledContent("Per purchase", value: "₹\(caps["perPurchase"] as? Int ?? 0)")
-                    LabeledContent("Spent today", value: "₹\(spent) of ₹\(caps["perDay"] as? Int ?? 0)")
-                }
-                Section("Recent") {
-                    ForEach(items.indices, id: \.self) { i in
-                        let a = items[i]
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(title(a)).font(.headline)
-                            if let inv = a["invoice_id"] as? String { Text("Invoice \(inv)").font(.caption.monospaced()).foregroundStyle(.secondary) }
-                            if let tx = a["txid"] as? String { Text("tx \(tx.prefix(20))…").font(.caption.monospaced()).foregroundStyle(.secondary) }
-                            Text(a["at"] as? String ?? "").font(.caption2).foregroundStyle(.tertiary)
-                        }
+            Form {
+                TextField("Name", text: $person.name)
+                Section("Phone") {
+                    TextField("+91", text: $person.phone).keyboardType(.phonePad)
+                    Picker("Operator", selection: $person.operatorName) {
+                        ForEach(["jio", "airtel", "vi", "bsnl"], id: \.self) { Text($0.capitalized) }
                     }
                 }
+                Section("Zcash") {
+                    TextField("u1…", text: $person.zec, axis: .vertical)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .font(.footnote.monospaced())
+                }
+                if !person.name.isEmpty {
+                    Button("Remove", role: .destructive) { onDelete(); dismiss() }
+                }
             }
-            .navigationTitle("Activity")
-            .task { await load() }
-            .refreshable { await load() }
+            .scrollContentBackground(.hidden)
+            .background(Roman.marble)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { onSave(person); dismiss() }.disabled(person.name.isEmpty)
+                }
+            }
+        }
+        .tint(Roman.gold)
+    }
+}
+
+// MARK: Ledger
+
+struct LedgerView: View {
+    @State private var items: [[String: Any]] = []
+    @State private var spent = 0
+    @State private var perDay = 0
+    @State private var perPurchase = 0
+    @State private var error: String?
+
+    var body: some View {
+        Page(title: "Ledger") {
+            if let error { Text(error).font(.footnote).foregroundStyle(Roman.porphyry) }
+            Tablet {
+                HStack(alignment: .lastTextBaseline) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Eyebrow(text: "Today")
+                        Text("₹\(spent)").font(Roman.caps(34, .bold)).foregroundStyle(Roman.ink)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("of ₹\(perDay)").font(.callout).foregroundStyle(Roman.faded)
+                        Text("₹\(perPurchase) each").font(.caption).foregroundStyle(Roman.faded)
+                    }
+                }
+                ProgressView(value: Double(min(spent, max(perDay, 1))), total: Double(max(perDay, 1)))
+                    .tint(Roman.gold)
+            }
+            VStack(spacing: 0) {
+                ForEach(items.indices, id: \.self) { i in
+                    entry(items[i])
+                    if i < items.count - 1 { Divider().overlay(Roman.stone) }
+                }
+            }
+            if items.isEmpty && error == nil {
+                Text("Nothing yet").font(Roman.caps(14)).foregroundStyle(Roman.faded).frame(maxWidth: .infinity).padding(.top, 30)
+            }
+        }
+        .task { await load() }
+        .refreshable { await load() }
+    }
+
+    private func entry(_ a: [String: Any]) -> some View {
+        let (icon, title) = describe(a)
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon).foregroundStyle(Roman.gold).frame(width: 22).padding(.top, 2)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Roman.ink)
+                if let inv = a["invoice_id"] as? String { Text(inv).font(.caption2.monospaced()).foregroundStyle(Roman.faded).textSelection(.enabled) }
+                if let tx = a["txid"] as? String { Text(tx).font(.caption2.monospaced()).foregroundStyle(Roman.faded).lineLimit(1).truncationMode(.middle).textSelection(.enabled) }
+            }
+            Spacer()
+            Text(time(a["at"] as? String)).font(.caption).foregroundStyle(Roman.faded)
+        }
+        .padding(.vertical, 12)
+    }
+
+    private func describe(_ a: [String: Any]) -> (String, String) {
+        let to = (a["to"] as? String).map { " · " + $0.capitalized } ?? ""
+        switch a["type"] as? String {
+        case "bitrefill":
+            let icon = a["kind"] as? String == "topup" ? "iphone.gen3" : a["kind"] as? String == "esim" ? "simcard" : "gift"
+            return (icon, "\(a["product"] as? String ?? "") ₹\(a["inr"] ?? "")\(to)")
+        case "zec": return ("shield.lefthalf.filled", "\(a["amount"] ?? "") ZEC sent\(to)")
+        case "swap": return ("arrow.triangle.2.circlepath", "\(a["amountIn"] ?? "") \(a["from"] ?? "") → \(a["amountOut"] ?? "") \(a["to"] ?? "")")
+        default: return ("circle", a["type"] as? String ?? "")
         }
     }
 
-    private func title(_ a: [String: Any]) -> String {
-        switch a["type"] as? String {
-        case "bitrefill": return "\(a["product"] as? String ?? "") ₹\(a["inr"] ?? "")\((a["to"] as? String).map { " · " + $0 } ?? "")"
-        case "zec": return "Sent \(a["amount"] ?? "") ZEC\((a["to"] as? String).map { " to " + $0 } ?? "")"
-        case "swap": return "Swap \(a["amountIn"] ?? "") \(a["from"] ?? "") → \(a["amountOut"] ?? "") \(a["to"] ?? "")"
-        default: return a["type"] as? String ?? ""
-        }
+    private func time(_ iso: String?) -> String {
+        guard let iso, let d = ISO8601DateFormatter.withFraction.date(from: iso) else { return "" }
+        return d.formatted(date: .omitted, time: .shortened)
     }
 
     private func load() async {
@@ -171,64 +394,88 @@ struct ActivityView: View {
             let j = try await API.request("GET", "/activity")
             items = j["activity"] as? [[String: Any]] ?? []
             spent = j["spentToday"] as? Int ?? 0
-            caps = j["caps"] as? [String: Any] ?? [:]
+            let caps = j["caps"] as? [String: Any] ?? [:]
+            perDay = caps["perDay"] as? Int ?? 0
+            perPurchase = caps["perPurchase"] as? Int ?? 0
             error = nil
         } catch { self.error = error.localizedDescription }
     }
 }
 
-struct SettingsView: View {
+extension ISO8601DateFormatter {
+    static let withFraction: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+}
+
+// MARK: Vault
+
+struct VaultView: View {
     @State private var server = Keyo.serverURL
     @State private var token = Keyo.token
-    @State private var mode = Keyo.walletMode
-    @State private var health = ""
-    @State private var balances = ""
+    @State private var status = ""
+    @State private var bitrefill = "—"
+    @State private var aegis = "—"
+    @State private var aegisAddress: String?
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Server") {
-                    TextField("http://192.168.x.x:8787", text: $server)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                    SecureField("Token", text: $token)
-                    Button("Check connection") { Task { await check() } }
-                    if !health.isEmpty { Text(health).font(.footnote) }
-                }
-                Section("Send ZEC with") {
-                    Picker("Wallet", selection: $mode) {
-                        Text("Zodl app").tag("zodl")
-                        Text("Keyo server wallet").tag("server")
-                    }
-                    .pickerStyle(.segmented)
-                }
-                Section("Balances") {
-                    Button("Refresh") { Task { await loadBalances() } }
-                    if !balances.isEmpty { Text(balances).font(.footnote.monospaced()) }
+        Page(title: "Vault") {
+            HStack(spacing: 10) {
+                balance("Bitrefill", bitrefill, icon: "gift")
+                balance("Aegis", aegis, icon: "shield.lefthalf.filled")
+            }
+            if let aegisAddress {
+                Tablet {
+                    Eyebrow(text: "Aegis address")
+                    Text(aegisAddress).font(.caption.monospaced()).foregroundStyle(Roman.ink).textSelection(.enabled)
                 }
             }
-            .navigationTitle("Settings")
-            .onChange(of: server) { _, v in Keyo.serverURL = v }
-            .onChange(of: token) { _, v in Keyo.token = v }
-            .onChange(of: mode) { _, v in Keyo.walletMode = v }
+            Tablet {
+                Eyebrow(text: "Server")
+                TextField("http://192.168.1.10:8787", text: $server)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
+                    .padding(12).background(Roman.marble, in: RoundedRectangle(cornerRadius: 10))
+                SecureField("Token", text: $token)
+                    .padding(12).background(Roman.marble, in: RoundedRectangle(cornerRadius: 10))
+                HStack {
+                    Button("Connect") { Task { await load() } }
+                        .font(Roman.caps(14, .bold)).foregroundStyle(Roman.gold)
+                    Spacer()
+                    Text(status).font(.caption).foregroundStyle(Roman.faded)
+                }
+            }
         }
+        .task { await load() }
+        .refreshable { await load() }
+        .onChange(of: server) { _, v in Keyo.serverURL = v }
+        .onChange(of: token) { _, v in Keyo.token = v }
     }
 
-    private func check() async {
-        do {
-            _ = try await API.request("GET", "/health", timeout: 6)
-            health = "Connected ✓"
-        } catch { health = error.localizedDescription }
+    private func balance(_ title: String, _ value: String, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon).foregroundStyle(Roman.gold)
+            Text(value).font(Roman.caps(20, .bold)).foregroundStyle(Roman.ink).lineLimit(1).minimumScaleFactor(0.6)
+            Text(title.uppercased()).font(Roman.caps(10, .bold)).tracking(2).foregroundStyle(Roman.faded)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Roman.travertine, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    private func loadBalances() async {
+    private func load() async {
+        status = "…"
         do {
             let j = try await API.request("GET", "/balance", timeout: 120)
-            var lines: [String] = []
-            if let b = j["bitrefill"] as? [String: Any] { lines.append("Bitrefill: \(b["balance"] ?? "?") \(b["currency"] ?? "")") }
-            if let e = j["bitrefillError"] as? String { lines.append("Bitrefill: \(e)") }
-            if let z = j["zec"] as? [String: Any] { lines.append("Server wallet: \(z["spendable"] ?? z["total"] ?? "?") ZEC") }
-            if let e = j["zecError"] as? String { lines.append("Server wallet: \(e)") }
-            balances = lines.joined(separator: "\n")
-        } catch { balances = error.localizedDescription }
+            if let b = j["bitrefill"] as? [String: Any] {
+                bitrefill = "\(b["balance"] ?? 0) \(b["currency"] ?? "")"
+            } else { bitrefill = "—" }
+            if let z = j["zec"] as? [String: Any] {
+                aegis = "\(z["spendable"] ?? z["total"] ?? 0) ZEC"
+                aegisAddress = z["address"] as? String
+            } else { aegis = "Off" }
+            status = "Connected"
+        } catch { status = error.localizedDescription }
     }
 }
